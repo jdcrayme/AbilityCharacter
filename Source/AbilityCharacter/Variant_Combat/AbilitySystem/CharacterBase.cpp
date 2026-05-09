@@ -13,19 +13,33 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimInstance.h"
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_DataDamage, "Data.Damage");
+
 ACharacterBase::ACharacterBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetIsReplicated(true);
 	AbilitySystemComponent->SetReplicationMode(AbilitySystemReplicationMode);
+	
 	AttributeSet = CreateDefaultSubobject<class UCharacterAttributeSet>(TEXT("AttributeSet"));
 }
 
-void ACharacterBase::TryActivateAbilityByTag(FGameplayTag AbilityTag)
+void ACharacterBase::InitializeAttributes()
 {
-	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
-		ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AbilityTag));
+	if (AbilitySystemComponent && DefaultAttributeEffect)
+	{
+		FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
+		EffectContext.AddSourceObject(this);
+ 
+		// Level 1 applies base values from the GE
+		FGameplayEffectSpecHandle NewHandle = AbilitySystemComponent->MakeOutgoingSpec(DefaultAttributeEffect, 1.f, EffectContext);
+		if (NewHandle.IsValid())
+		{
+			AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*NewHandle.Data.Get());
+		}
+	}
 }
 
 void ACharacterBase::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -52,6 +66,58 @@ void ACharacterBase::SetupPlayerInputComponent(class UInputComponent* PlayerInpu
 		}
 	}
 }
+	
+void ACharacterBase::BeginPlay()
+{
+	Super::BeginPlay();
+	InitializeAttributes();
+}
+
+float ACharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	if (AbilitySystemComponent && DamageGEClass && DamageAmount > 0.f)
+	{
+		// "Damage" tag used for SetByCaller, must match what you reference in your GameplayEffect as the SetByCaller key
+		//static const FGameplayTag DamageTag = FGameplayTag::RequestGameplayTag(FName("Data.Damage"));
+ 
+		// Create EffectSpec at level 1
+		FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
+		EffectContext.AddSourceObject(this);
+ 
+		FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(DamageGEClass, 1.f, EffectContext);
+		if (SpecHandle.IsValid())
+		{
+			// Pass the actual damage via SetByCaller so it's not hard-coded in the GE
+			SpecHandle.Data->SetSetByCallerMagnitude(TAG_DataDamage, -DamageAmount);
+ 
+			AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
+		}
+		return DamageAmount;
+	}
+ 
+	// Fallback to default if no GAS or GE class set
+	return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+}
+
+void ACharacterBase::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	if (AbilitySystemComponent)
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+}
+
+void ACharacterBase::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+	if (AbilitySystemComponent)
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+}
+
+void ACharacterBase::TryActivateAbilityByTag(FGameplayTag AbilityTag)
+{
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+		ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AbilityTag));
+}
 
 UAbilitySystemComponent* ACharacterBase::GetAbilitySystemComponent() const
 {
@@ -77,23 +143,4 @@ void ACharacterBase::RemoveAbility(const FGameplayAbilitySpecHandle& Handle)
 		AbilitySystemComponent->ClearAbility(Handle);		
 		OnAbilitiesChanged.Broadcast();
 	}
-}
-
-void ACharacterBase::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
-void ACharacterBase::PossessedBy(AController* NewController)
-{
-	Super::PossessedBy(NewController);
-	if (AbilitySystemComponent)
-		AbilitySystemComponent->InitAbilityActorInfo(this, this);
-}
-
-void ACharacterBase::OnRep_PlayerState()
-{
-	Super::OnRep_PlayerState();
-	if (AbilitySystemComponent)
-		AbilitySystemComponent->InitAbilityActorInfo(this, this);
 }

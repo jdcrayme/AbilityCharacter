@@ -2,8 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "AttributeSet.h"
+#include "NativeGameplayTags.h"
 #include "AbilitySystemComponent.h"
 #include "CharacterAttributeSet.generated.h"
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_State_Dead);
 
 UCLASS()
 class UCharacterAttributeSet : public UAttributeSet
@@ -18,39 +21,25 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes", ReplicatedUsing = OnRep_Health)
 	FGameplayAttributeData Health;
 	ATTRIBUTE_ACCESSORS_BASIC(UCharacterAttributeSet, Health);
-
-	/*
-	UPROPERTY(BlueprintReadOnly, Category = "Attributes", ReplicatedUsing = OnRep_HealthMax)
-	FGameplayAttributeData HealthMax;
-	ATTRIBUTE_ACCESSORS_BASIC(UCharacterAttributeSet, HealthMax);
-
-	UPROPERTY(BlueprintReadOnly, Category = "Attributes", ReplicatedUsing = OnRep_HealthRegen)
-	FGameplayAttributeData HealthRegen;
-	ATTRIBUTE_ACCESSORS_BASIC(UCharacterAttributeSet, HealthRegen);
-
-	//Stamina
-	UPROPERTY(BlueprintReadOnly, Category = "Attributes", ReplicatedUsing = OnRep_Stamina)
-	FGameplayAttributeData Stamina;
-	ATTRIBUTE_ACCESSORS_BASIC(UCharacterAttributeSet, Stamina);
-
-	UPROPERTY(BlueprintReadOnly, Category = "Attributes", ReplicatedUsing = OnRep_StaminaMax)
-	FGameplayAttributeData StaminaMax;
-	ATTRIBUTE_ACCESSORS_BASIC(UCharacterAttributeSet, StaminaMax);
-
-	UPROPERTY(BlueprintReadOnly, Category = "Attributes", ReplicatedUsing = OnRep_StaminaRegen)
-	FGameplayAttributeData StaminaRegen;
-	ATTRIBUTE_ACCESSORS_BASIC(UCharacterAttributeSet, StaminaRegen);
-
-	//Armor
-	UPROPERTY(BlueprintReadOnly, Category = "Attributes", ReplicatedUsing = OnRep_Armor)
-	FGameplayAttributeData Armor;
-	ATTRIBUTE_ACCESSORS_BASIC(UCharacterAttributeSet, Armor);*/
-
+	
 	UFUNCTION()
 	void OnRep_Health(const FGameplayAttributeData& OldValue)
 	{
 		GAMEPLAYATTRIBUTE_REPNOTIFY(UCharacterAttributeSet, Health, OldValue);
 	}
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes", ReplicatedUsing = OnRep_HealthMax)
+	FGameplayAttributeData HealthMax;
+	ATTRIBUTE_ACCESSORS_BASIC(UCharacterAttributeSet, HealthMax);
 
+	UFUNCTION()
+	void OnRep_HealthMax(const FGameplayAttributeData& OldValue)
+	{
+		GAMEPLAYATTRIBUTE_REPNOTIFY(UCharacterAttributeSet, HealthMax, OldValue);
+	}
+
+	void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue);
+ 	void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data);
+	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

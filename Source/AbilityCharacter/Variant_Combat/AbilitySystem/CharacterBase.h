@@ -11,7 +11,13 @@
 #include "AbilitySystemComponent.h"
 #include "Engine/TimerHandle.h"
 #include "AbilitySystem/CharacterAttributeSet.h"
+#include "NativeGameplayTags.h"
 #include "CharacterBase.generated.h"
+
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_DataDamage);
+
+class UInputAction;
 
 USTRUCT(BlueprintType)
 struct FInputActionAbilityMapping
@@ -42,43 +48,54 @@ public:
 	/** Constructor */
 	ACharacterBase();
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Ability System")
 	UAbilitySystemComponent* AbilitySystemComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability System")
 	EGameplayEffectReplicationMode AbilitySystemReplicationMode = EGameplayEffectReplicationMode::Mixed;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Abilities")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ability System")
 	class UCharacterAttributeSet* AttributeSet;
-
-	UPROPERTY(EditAnywhere, Category = "Input")
-	TArray<FInputActionAbilityMapping> AbilityInputMappings;
- 
-	/** The handler function that will receive the payload */
-	void TryActivateAbilityByTag(FGameplayTag AbilityTag);
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ability System|Attributes")
+	TSubclassOf<UGameplayEffect> DefaultAttributeEffect;
+	
+	UPROPERTY(EditAnywhere, Category = "Ability System|Input")
+	TArray<FInputActionAbilityMapping> AbilityInputMappings;
+ 	
 	// Event dispatcher exposed to Blueprints and C++
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnAbilitiesChanged OnAbilitiesChanged;
 	
+	UPROPERTY(EditDefaultsOnly, Category="GAS")
+	TSubclassOf<class UGameplayEffect> DamageGEClass;
 protected:
 	
-	/** Handles input bindings */
+	void InitializeAttributes();
+	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	
+	virtual void BeginPlay() override;
+	
+	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	
+	virtual void PossessedBy(AController* NewController) override;
+
+	virtual void OnRep_PlayerState() override;
 	
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-
+	
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+	void TryActivateAbilityByTag(FGameplayTag AbilityTag);
+	
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 	void GrantAbility(TSubclassOf<UGameplayAbility> AbilityClass, int32 AbilityLevel);
 
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 	void RemoveAbility(const FGameplayAbilitySpecHandle& Handle);
 
-	virtual void BeginPlay() override;
-
-	virtual void PossessedBy(AController* NewController) override;
-
-	virtual void OnRep_PlayerState() override;
+	UFUNCTION(BlueprintGetter, Category = "Ability")
+	float GetHealth() const {return AttributeSet->GetHealth();}
 
 };

@@ -40,8 +40,8 @@ class ACombatCharacter : public ACharacterBase, public ICombatAttacker, public I
 	UCameraComponent* FollowCamera;
 
 	/** Life bar widget component */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
-	UWidgetComponent* LifeBar;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	//UWidgetComponent* LifeBar;
 	
 protected:
 
@@ -73,14 +73,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category ="Input")
 	UInputAction* ToggleCameraAction;
 	
-	/** Max amount of HP the character will have on respawn */
-	UPROPERTY(EditAnywhere, Category="Damage", meta = (ClampMin = 0, ClampMax = 100))
-	float MaxHP = 5.0f;
-
-	/** Current amount of HP the character has */
-	UPROPERTY(VisibleAnywhere, Category="Damage")
-	float CurrentHP = 0.0f;
-
 	/** Life bar widget fill color */
 	UPROPERTY(EditAnywhere, Category="Damage")
 	FLinearColor LifeBarColor;
@@ -90,8 +82,8 @@ protected:
 	FName PelvisBoneName;
 
 	/** Pointer to the life bar widget */
-	UPROPERTY(EditAnywhere, Category="Damage")
-	TObjectPtr<UCombatLifeBar> LifeBarWidget;
+	//UPROPERTY(EditAnywhere, Category="Damage")
+	//TObjectPtr<UCombatLifeBar> LifeBarWidget;
 
 	/** Max amount of time that may elapse for a non-combo attack input to not be considered stale */
 	UPROPERTY(EditAnywhere, Category="Melee Attack", meta = (ClampMin = 0, ClampMax = 5, Units = "s"))

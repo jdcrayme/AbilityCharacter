@@ -29,8 +29,8 @@ ACombatEnemy::ACombatEnemy()
 	bUseControllerRotationYaw = false;
 
 	// create the life bar
-	LifeBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("LifeBar"));
-	LifeBar->SetupAttachment(RootComponent);
+	//LifeBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("LifeBar"));
+	//LifeBar->SetupAttachment(RootComponent);
 
 	// set the collision capsule size
 	GetCapsuleComponent()->SetCapsuleSize(35.0f, 90.0f);
@@ -39,7 +39,7 @@ ACombatEnemy::ACombatEnemy()
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 
 	// reset HP to maximum
-	CurrentHP = MaxHP;
+	//CurrentHP = MaxHP;
 }
 
 void ACombatEnemy::DoAIComboAttack()
@@ -232,7 +232,7 @@ void ACombatEnemy::ApplyDamage(float Damage, AActor* DamageCauser, const FVector
 void ACombatEnemy::HandleDeath()
 {
 	// hide the life bar
-	LifeBar->SetHiddenInGame(true);
+	//LifeBar->SetHiddenInGame(true);
 
 	// disable the collision capsule to avoid being hit again while dead
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -274,17 +274,10 @@ void ACombatEnemy::RemoveFromLevel()
 
 float ACombatEnemy::TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	// only process damage if the character is still alive
-	if (CurrentHP <= 0.0f)
-	{
-		return 0.0f;
-	}
-
-	// reduce the current HP
-	CurrentHP -= Damage;
-
+	Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+	
 	// have we run out of HP?
-	if (CurrentHP <= 0.0f)
+	if (AttributeSet->GetHealth() <= 0.0f)
 	{
 		// die
 		HandleDeath();
@@ -292,7 +285,7 @@ float ACombatEnemy::TakeDamage(float Damage, struct FDamageEvent const& DamageEv
 	else
 	{
 		// update the life bar
-		LifeBarWidget->SetLifePercentage(CurrentHP / MaxHP);
+		//LifeBarWidget->SetLifePercentage(AttributeSet->GetHealth() / AttributeSet->GetHealthMax());
 
 		// enable partial ragdoll physics, but keep the pelvis vertical
 		GetMesh()->SetPhysicsBlendWeight(0.5f);
@@ -306,9 +299,9 @@ float ACombatEnemy::TakeDamage(float Damage, struct FDamageEvent const& DamageEv
 void ACombatEnemy::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
-
+	
 	// is the character still alive?
-	if (CurrentHP >= 0.0f)
+	if (AttributeSet->GetHealth() >= 0.0f)
 	{
 		// disable ragdoll physics
 		GetMesh()->SetPhysicsBlendWeight(0.0f);
@@ -321,17 +314,17 @@ void ACombatEnemy::Landed(const FHitResult& Hit)
 void ACombatEnemy::BeginPlay()
 {
 	// reset HP to maximum
-	CurrentHP = MaxHP;
+	//CurrentHP = MaxHP;
 
 	// we top the HP before BeginPlay so StateTree picks it up at the right value
 	Super::BeginPlay();
 
 	// get the life bar widget from the widget comp
-	LifeBarWidget = Cast<UCombatLifeBar>(LifeBar->GetUserWidgetObject());
-	check(LifeBarWidget);
+	//LifeBarWidget = Cast<UCombatLifeBar>(LifeBar->GetUserWidgetObject());
+	//check(LifeBarWidget);
 
 	// fill the life bar
-	LifeBarWidget->SetLifePercentage(1.0f);
+	//LifeBarWidget->SetLifePercentage(1.0f);
 }
 
 void ACombatEnemy::EndPlay(EEndPlayReason::Type EndPlayReason)

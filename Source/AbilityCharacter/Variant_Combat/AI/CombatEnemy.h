@@ -7,6 +7,7 @@
 #include "CombatAttacker.h"
 #include "CombatDamageable.h"
 #include "Animation/AnimMontage.h"
+#include "AbilitySystem/CharacterBase.h"
 #include "Engine/TimerHandle.h"
 #include "CombatEnemy.generated.h"
 
@@ -28,13 +29,13 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnEnemyDied);
  *  Its bundled AI Controller runs logic through StateTree
  */
 UCLASS(abstract)
-class ACombatEnemy : public ACharacter, public ICombatAttacker, public ICombatDamageable
+class ACombatEnemy : public ACharacterBase, public ICombatAttacker, public ICombatDamageable
 {
 	GENERATED_BODY()
 
 	/** Life bar widget component */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
-	UWidgetComponent* LifeBar;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	//UWidgetComponent* LifeBar;
 
 public:
 	
@@ -44,14 +45,14 @@ public:
 protected:
 
 	/** Max amount of HP the character will have on respawn */
-	UPROPERTY(EditAnywhere, Category="Damage")
-	float MaxHP = 3.0f;
+	//UPROPERTY(EditAnywhere, Category="Damage")
+	//float MaxHP = 3.0f;
 
 public:
 
 	/** Current amount of HP the character has */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Damage", meta = (ClampMin = 0, ClampMax = 100))
-	float CurrentHP = 0.0f;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Damage", meta = (ClampMin = 0, ClampMax = 100))
+	//float CurrentHP = 0.0f;
 
 protected:
 
@@ -60,8 +61,8 @@ protected:
 	FName PelvisBoneName;
 
 	/** Pointer to the life bar widget */
-	UPROPERTY(EditAnywhere, Category="Damage")
-	UCombatLifeBar* LifeBarWidget;
+	//UPROPERTY(EditAnywhere, Category="Damage")
+	//UCombatLifeBar* LifeBarWidget;
 
 	/** If true, the character is currently playing an attack animation */
 	bool bIsAttacking = false;

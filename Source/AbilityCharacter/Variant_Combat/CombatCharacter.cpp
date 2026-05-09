@@ -8,7 +8,6 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Camera/CameraComponent.h"
-#include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "CombatLifeBar.h"
 #include "Engine/DamageEvents.h"
@@ -44,11 +43,12 @@ ACombatCharacter::ACombatCharacter()
 	FollowCamera->bUsePawnControlRotation = false;
 
 	// create the life bar widget component
-	LifeBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("LifeBar"));
-	LifeBar->SetupAttachment(RootComponent);
+	//LifeBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("LifeBar"));
+	//LifeBar->SetupAttachment(RootComponent);
 
 	// set the player tag
 	Tags.Add(FName("Player"));
+	
 }
 
 void ACombatCharacter::Move(const FInputActionValue& Value)
@@ -173,10 +173,10 @@ void ACombatCharacter::DoChargedAttackEnd()
 void ACombatCharacter::ResetHP()
 {
 	// reset the current HP total
-	CurrentHP = MaxHP;
+	//CurrentHP = MaxHP;
 
 	// update the life bar
-	LifeBarWidget->SetLifePercentage(1.0f);
+	//LifeBarWidget->SetLifePercentage(1.0f);
 }
 
 void ACombatCharacter::ComboAttack()
@@ -411,7 +411,7 @@ void ACombatCharacter::HandleDeath()
 	GetMesh()->SetSimulatePhysics(true);
 
 	// hide the life bar
-	LifeBar->SetHiddenInGame(true);
+	//LifeBar->SetHiddenInGame(true);
 
 	// pull back the camera
 	GetCameraBoom()->TargetArmLength = DeathCameraDistance;
@@ -438,17 +438,10 @@ void ACombatCharacter::RespawnCharacter()
 
 float ACombatCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	// only process damage if the character is still alive
-	if (CurrentHP <= 0.0f)
-	{
-		return 0.0f;
-	}
-
-	// reduce the current HP
-	CurrentHP -= Damage;
-
+	Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+	
 	// have we run out of HP?
-	if (CurrentHP <= 0.0f)
+	if (AttributeSet->GetHealth() <= 0.0f)
 	{
 		// die
 		HandleDeath();
@@ -456,7 +449,7 @@ float ACombatCharacter::TakeDamage(float Damage, struct FDamageEvent const& Dama
 	else
 	{
 		// update the life bar
-		LifeBarWidget->SetLifePercentage(CurrentHP / MaxHP);
+		//LifeBarWidget->SetLifePercentage(AttributeSet->GetHealth() / AttributeSet->GetHealthMax());
 
 		// enable partial ragdoll physics, but keep the pelvis vertical
 		GetMesh()->SetPhysicsBlendWeight(0.5f);
@@ -470,9 +463,9 @@ float ACombatCharacter::TakeDamage(float Damage, struct FDamageEvent const& Dama
 void ACombatCharacter::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
-
+	
 	// is the character still alive?
-	if (CurrentHP >= 0.0f)
+	if (AttributeSet->GetHealth() >= 0.0f)
 	{
 		// disable ragdoll physics
 		GetMesh()->SetPhysicsBlendWeight(0.0f);
@@ -484,8 +477,8 @@ void ACombatCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	// get the life bar from the widget component
-	LifeBarWidget = Cast<UCombatLifeBar>(LifeBar->GetUserWidgetObject());
-	check(LifeBarWidget);
+	//LifeBarWidget = Cast<UCombatLifeBar>(LifeBar->GetUserWidgetObject());
+	//check(LifeBarWidget);
 
 	// initialize the camera
 	GetCameraBoom()->TargetArmLength = DefaultCameraDistance;
@@ -494,10 +487,24 @@ void ACombatCharacter::BeginPlay()
 	MeshStartingTransform = GetMesh()->GetRelativeTransform();
 
 	// set the life bar color
-	LifeBarWidget->SetBarColor(LifeBarColor);
+	//LifeBarWidget->SetBarColor(LifeBarColor);
 
 	// reset HP to maximum
 	ResetHP();
+	
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UCharacterAttributeSet::GetHealthAttribute())
+			.AddLambda([this](const FOnAttributeChangeData& Data)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Health changed: %.2f -> %.2f"), Data.OldValue, Data.NewValue);
+			// Add gameplay logic here, for example:
+			if(Data.NewValue <= 0.f)
+			{
+				// Trigger death logic, animation, etc.
+			}
+		});
+	}
 }
 
 void ACombatCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
