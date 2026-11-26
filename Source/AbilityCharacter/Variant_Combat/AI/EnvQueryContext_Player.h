@@ -11,7 +11,7 @@
  *  Basic EnvQuery Context that returns the first local player
  */
 UCLASS()
-class UEnvQueryContext_Player : public UEnvQueryContext
+class ABILITYCHARACTER_API UEnvQueryContext_Player : public UEnvQueryContext
 {
 	GENERATED_BODY()
 	

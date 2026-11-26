@@ -5,6 +5,9 @@
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "PhysicsEngine/PhysicsConstraintComponent.h"
+#include "CombatEffectContext.h"
+#include "CombatGameplayTags.h"
+#include "Engine/DamageEvents.h"
 
 ACombatDummy::ACombatDummy()
 {
@@ -29,6 +32,21 @@ ACombatDummy::ACombatDummy()
 	PhysicsConstraint->SetupAttachment(RootComponent);
 
 	PhysicsConstraint->SetConstrainedComponents(BasePlate, NAME_None, Dummy, NAME_None);
+
+	// create the ability system component so abilities can hit the dummy with standard damage effects
+	AbilitySystemComponent = CreateDefaultSubobject<UCombatAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	AttributeSet = CreateDefaultSubobject<UCharacterAttributeSet>(TEXT("AttributeSet"));
+	AbilitySystemComponent->AddAttributeSetSubobject(AttributeSet);
+}
+
+void ACombatDummy::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// the dummy is invincible: give it effectively infinite health (HealthMax is the clamp)
+	AbilitySystemComponent->SetNumericAttributeBase(UCharacterAttributeSet::GetHealthMaxAttribute(), TNumericLimits<float>::Max());
+	AbilitySystemComponent->SetNumericAttributeBase(UCharacterAttributeSet::GetHealthAttribute(), TNumericLimits<float>::Max());
+	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 }
 
 void ACombatDummy::ApplyDamage(float Damage, AActor* DamageCauser, const FVector& DamageLocation, const FVector& DamageImpulse)
@@ -53,4 +71,30 @@ void ACombatDummy::ApplyHealing(float Healing, AActor* Healer)
 void ACombatDummy::NotifyDanger(const FVector& DangerLocation, AActor* DangerSource)
 {
 	// unused
+}
+
+void ACombatDummy::HandleGameplayCue(UObject* Self, FGameplayTag GameplayCueTag, EGameplayCueEvent::Type EventType, const FGameplayCueParameters& Parameters)
+{
+	if (GameplayCueTag.MatchesTagExact(TAG_GameplayCue_Damage) && EventType == EGameplayCueEvent::Executed)
+	{
+		// react to the damage cue: knock the dummy away from the impact
+		FVector ImpactLocation = Parameters.Location;
+		FVector KnockbackImpulse = FVector::ZeroVector;
+
+		if (const FCombatGameplayEffectContext* CombatContext = CombatEffectContext::Extract(Parameters.EffectContext))
+		{
+			KnockbackImpulse = CombatContext->GetKnockbackImpulse();
+			if (CombatContext->GetHitResult())
+			{
+				ImpactLocation = CombatContext->GetHitResult()->ImpactPoint;
+			}
+		}
+
+		if (!KnockbackImpulse.IsZero())
+		{
+			Dummy->AddImpulseAtLocation(KnockbackImpulse * Dummy->GetMass(), ImpactLocation);
+		}
+
+		BP_OnDummyDamaged(ImpactLocation, (-Parameters.Normal).GetSafeNormal());
+	}
 }

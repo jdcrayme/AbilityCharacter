@@ -33,6 +33,7 @@ public class AbilityCharacter : ModuleRules
 			"AbilityCharacter/Variant_Combat",
 			"AbilityCharacter/Variant_Combat/AI",
 			"AbilityCharacter/Variant_Combat/Animation",
+			"AbilityCharacter/Variant_Combat/AbilitySystem",
 			"AbilityCharacter/Variant_Combat/Gameplay",
 			"AbilityCharacter/Variant_Combat/Interfaces",
 			"AbilityCharacter/Variant_Combat/UI",

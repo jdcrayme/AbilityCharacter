@@ -2,17 +2,21 @@
 
 
 #include "AnimNotify_CheckChargedAttack.h"
-#include "CombatAttacker.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "CombatGameplayTags.h"
 #include "Components/SkeletalMeshComponent.h"
 
 void UAnimNotify_CheckChargedAttack::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
-	// cast the owner to the attacker interface
-	if (ICombatAttacker* AttackerInterface = Cast<ICombatAttacker>(MeshComp->GetOwner()))
-	{
-		// tell the actor to check for a charged attack loop
-		AttackerInterface->CheckChargedAttack();
-	}
+	AActor* Owner = MeshComp->GetOwner();
+	if (!Owner) return;
+
+	// ask the running charged attack ability whether to keep charging or release
+	FGameplayEventData EventData;
+	EventData.EventTag = TAG_Event_CheckChargedAttack;
+	EventData.Instigator = Owner;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Owner, TAG_Event_CheckChargedAttack, EventData);
 }
 
 FString UAnimNotify_CheckChargedAttack::GetNotifyName_Implementation() const

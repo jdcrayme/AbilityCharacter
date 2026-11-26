@@ -12,7 +12,7 @@ class UBoxComponent;
  *  A simple volume that activates a list of actors when the player pawn enters.
  */
 UCLASS()
-class ACombatActivationVolume : public AActor
+class ABILITYCHARACTER_API ACombatActivationVolume : public AActor
 {
 	GENERATED_BODY()
 

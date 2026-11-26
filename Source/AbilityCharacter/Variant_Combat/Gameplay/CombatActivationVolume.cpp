@@ -5,6 +5,8 @@
 #include "Components/BoxComponent.h"
 #include "GameFramework/Character.h"
 #include "CombatActivatable.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "CombatGameplayTags.h"
 
 ACombatActivationVolume::ACombatActivationVolume()
 {
@@ -34,6 +36,10 @@ void ACombatActivationVolume::OnOverlap(UPrimitiveComponent* OverlappedComponent
 		// is the Character controlled by a player
 		if (PlayerCharacter->IsPlayerControlled())
 		{
+			// tell the player's stance system it walked into a combat arena; the
+			// stance monitor switches to the combat stance, which arms the attacks
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(PlayerCharacter, TAG_Event_ArenaEntered, FGameplayEventData());
+
 			// process the actors to activate list
 			for (AActor* CurrentActor : ActorsToActivate)
 			{

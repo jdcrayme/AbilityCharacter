@@ -5,7 +5,7 @@
 #include "HideByTagComponent.generated.h"
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class UHideByTagComponent : public USceneComponent
+class ABILITYCHARACTER_API UHideByTagComponent : public USceneComponent
 {
 	GENERATED_BODY()
  

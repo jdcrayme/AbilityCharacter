@@ -10,7 +10,7 @@
  *  AnimNotify to perform a charged attack hold check.
  */
 UCLASS()
-class UAnimNotify_CheckChargedAttack : public UAnimNotify
+class ABILITYCHARACTER_API UAnimNotify_CheckChargedAttack : public UAnimNotify
 {
 	GENERATED_BODY()
 	

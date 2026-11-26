@@ -12,7 +12,7 @@ class UStateTreeAIComponent;
  *	A basic AI Controller capable of running StateTree
  */
 UCLASS(abstract)
-class ACombatAIController : public AAIController
+class ABILITYCHARACTER_API ACombatAIController : public AAIController
 {
 	GENERATED_BODY()
 

@@ -20,6 +20,8 @@ class ABILITYCHARACTER_API IHasActorInterface
 {
 	GENERATED_BODY()
 
-	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
+	// BlueprintNativeEvent allows implementation in both C++ and Blueprints
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Actor Interface")
+	void SetActor(AActor* NewActor);
 };

@@ -15,7 +15,7 @@ class ACombatCharacter;
  *  Respawns the player character at the checkpoint when it's destroyed
  */
 UCLASS(abstract, Config="Game")
-class ACombatPlayerController : public APlayerController
+class ABILITYCHARACTER_API ACombatPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 	

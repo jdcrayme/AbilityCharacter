@@ -14,13 +14,14 @@
 #include "TimerManager.h"
 #include "Engine/LocalPlayer.h"
 #include "CombatPlayerController.h"
+#include "CombatGameplayTags.h"
+#include "AbilitySystem/StanceMonitorAbility.h"
+#include "AbilitySystem/CombatStanceAbility.h"
+#include "AbilitySystem/NeutralStanceAbility.h"
 
 ACombatCharacter::ACombatCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
-	// bind the attack montage ended delegate
-	OnAttackMontageEnded.BindUObject(this, &ACombatCharacter::AttackMontageEnded);
 
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(35.0f, 90.0f);
@@ -42,13 +43,31 @@ ACombatCharacter::ACombatCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
-	// create the life bar widget component
-	//LifeBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("LifeBar"));
-	//LifeBar->SetupAttachment(RootComponent);
-
 	// set the player tag
 	Tags.Add(FName("Player"));
-	
+
+	// the stance monitor watches the game context (nearby enemies, arena volumes)
+	// and switches between stances; the combat stance grants the attack abilities.
+	// Dash demonstrates the cost effect + gameplay cue chain.
+	DefaultAbilities = {
+		UStanceMonitorAbility::StaticClass(),
+		UCombatStanceAbility::StaticClass(),
+		UNeutralStanceAbility::StaticClass()
+	};
+
+	// shared attributes with the AI characters
+	static ConstructorHelpers::FClassFinder<UGameplayEffect> InitialAttributesFinder(TEXT("/Game/Variant_Combat/Effect/GE_InitialCharacter"));
+	if (InitialAttributesFinder.Succeeded())
+	{
+		DefaultAttributeEffect = InitialAttributesFinder.Class;
+	}
+
+	// dash is granted but not bound to input yet; activate it by the Ability.Dash tag
+	static ConstructorHelpers::FClassFinder<UGameplayAbility> DashAbilityFinder(TEXT("/Game/Variant_Combat/Blueprints/Abilities/Dash/GA_Dash"));
+	if (DashAbilityFinder.Succeeded())
+	{
+		DefaultAbilities.Add(DashAbilityFinder.Class);
+	}
 }
 
 void ACombatCharacter::Move(const FInputActionValue& Value)
@@ -103,10 +122,10 @@ void ACombatCharacter::DoMove(float Right, float Forward)
 		// get forward vector
 		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 
-		// get right vector 
+		// get right vector
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
-		// add movement 
+		// add movement
 		AddMovementInput(ForwardDirection, Forward);
 		AddMovementInput(RightDirection, Right);
 	}
@@ -124,17 +143,9 @@ void ACombatCharacter::DoLook(float Yaw, float Pitch)
 
 void ACombatCharacter::DoComboAttackStart()
 {
-	// are we already playing an attack animation?
-	if (bIsAttacking)
-	{
-		// cache the input time so we can check it later
-		CachedAttackInputTime = GetWorld()->GetTimeSeconds();
-
-		return;
-	}
-
-	// perform a combo attack
-	ComboAttack();
+	// forward the input to the ability system: the first press activates the
+	// combo attack ability, further presses buffer the next combo hit
+	SendAbilityInputEvent(TAG_Event_InputPrimaryPressed);
 }
 
 void ACombatCharacter::DoComboAttackEnd()
@@ -144,262 +155,15 @@ void ACombatCharacter::DoComboAttackEnd()
 
 void ACombatCharacter::DoChargedAttackStart()
 {
-	// raise the charging attack flag
-	bIsChargingAttack = true;
-
-	if (bIsAttacking)
-	{
-		// cache the input time so we can check it later
-		CachedAttackInputTime = GetWorld()->GetTimeSeconds();
-
-		return;
-	}
-
-	ChargedAttack();
+	// forward the input to the ability system: the press activates the charged
+	// attack ability, which keeps charging while we hold the button
+	SendAbilityInputEvent(TAG_Event_InputSecondaryPressed);
 }
 
 void ACombatCharacter::DoChargedAttackEnd()
 {
-	// lower the charging attack flag
-	bIsChargingAttack = false;
-
-	// if we've done the charge loop at least once, release the charged attack right away
-	if (bHasLoopedChargedAttack)
-	{
-		CheckChargedAttack();
-	}
-}
-
-void ACombatCharacter::ResetHP()
-{
-	// reset the current HP total
-	//CurrentHP = MaxHP;
-
-	// update the life bar
-	//LifeBarWidget->SetLifePercentage(1.0f);
-}
-
-void ACombatCharacter::ComboAttack()
-{
-	// raise the attacking flag
-	bIsAttacking = true;
-
-	// reset the combo count
-	ComboCount = 0;
-
-	// notify enemies they are about to be attacked
-	NotifyEnemiesOfIncomingAttack();
-
-	// play the attack montage
-	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
-	{
-		const float MontageLength = AnimInstance->Montage_Play(ComboAttackMontage, 1.0f, EMontagePlayReturnType::MontageLength, 0.0f, true);
-
-		// subscribe to montage completed and interrupted events
-		if (MontageLength > 0.0f)
-		{
-			// set the end delegate for the montage
-			AnimInstance->Montage_SetEndDelegate(OnAttackMontageEnded, ComboAttackMontage);
-		}
-	}
-
-}
-
-void ACombatCharacter::ChargedAttack()
-{
-	// raise the attacking flag
-	bIsAttacking = true;
-
-	// reset the charge loop flag
-	bHasLoopedChargedAttack = false;
-
-	// notify enemies they are about to be attacked
-	NotifyEnemiesOfIncomingAttack();
-
-	// play the charged attack montage
-	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
-	{
-		const float MontageLength = AnimInstance->Montage_Play(ChargedAttackMontage, 1.0f, EMontagePlayReturnType::MontageLength, 0.0f, true);
-
-		// subscribe to montage completed and interrupted events
-		if (MontageLength > 0.0f)
-		{
-			// set the end delegate for the montage
-			AnimInstance->Montage_SetEndDelegate(OnAttackMontageEnded, ChargedAttackMontage);
-		}
-	}
-}
-
-void ACombatCharacter::AttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
-{
-	// reset the attacking flag
-	bIsAttacking = false;
-
-	// check if we have a non-stale cached input
-	if (GetWorld()->GetTimeSeconds() - CachedAttackInputTime <= AttackInputCacheTimeTolerance)
-	{
-		// are we holding the charged attack button?
-		if (bIsChargingAttack)
-		{
-			// do a charged attack
-			ChargedAttack();
-		}
-		else
-		{
-			// do a regular attack
-			ComboAttack();
-		}
-	}
-}
-
-void ACombatCharacter::DoAttackTrace(FName DamageSourceBone)
-{
-	// sweep for objects in front of the character to be hit by the attack
-	TArray<FHitResult> OutHits;
-
-	// start at the provided socket location, sweep forward
-	const FVector TraceStart = GetMesh()->GetSocketLocation(DamageSourceBone);
-	const FVector TraceEnd = TraceStart + (GetActorForwardVector() * MeleeTraceDistance);
-
-	// check for pawn and world dynamic collision object types
-	FCollisionObjectQueryParams ObjectParams;
-	ObjectParams.AddObjectTypesToQuery(ECC_Pawn);
-	ObjectParams.AddObjectTypesToQuery(ECC_WorldDynamic);
-
-	// use a sphere shape for the sweep
-	FCollisionShape CollisionShape;
-	CollisionShape.SetSphere(MeleeTraceRadius);
-
-	// ignore self
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActor(this);
-
-	if (GetWorld()->SweepMultiByObjectType(OutHits, TraceStart, TraceEnd, FQuat::Identity, ObjectParams, CollisionShape, QueryParams))
-	{
-		// iterate over each object hit
-		for (const FHitResult& CurrentHit : OutHits)
-		{
-			// check if we've hit a damageable actor
-			ICombatDamageable* Damageable = Cast<ICombatDamageable>(CurrentHit.GetActor());
-
-			if (Damageable)
-			{
-				// knock upwards and away from the impact normal
-				const FVector Impulse = (CurrentHit.ImpactNormal * -MeleeKnockbackImpulse) + (FVector::UpVector * MeleeLaunchImpulse);
-
-				// pass the damage event to the actor
-				Damageable->ApplyDamage(MeleeDamage, this, CurrentHit.ImpactPoint, Impulse);
-
-				// call the BP handler to play effects, etc.
-				DealtDamage(MeleeDamage, CurrentHit.ImpactPoint);
-			}
-		}
-	}
-}
-
-void ACombatCharacter::CheckCombo()
-{
-	// are we playing a non-charge attack animation?
-	if (bIsAttacking && !bIsChargingAttack)
-	{
-		// is the last attack input not stale?
-		if (GetWorld()->GetTimeSeconds() - CachedAttackInputTime <= ComboInputCacheTimeTolerance)
-		{
-			// consume the attack input so we don't accidentally trigger it twice
-			CachedAttackInputTime = 0.0f;
-
-			// increase the combo counter
-			++ComboCount;
-
-			// do we still have a combo section to play?
-			if (ComboCount < ComboSectionNames.Num())
-			{
-				// notify enemies they are about to be attacked
-				NotifyEnemiesOfIncomingAttack();
-
-				// jump to the next combo section
-				if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
-				{
-					AnimInstance->Montage_JumpToSection(ComboSectionNames[ComboCount], ComboAttackMontage);
-				}
-			}
-		}
-	}
-}
-
-void ACombatCharacter::CheckChargedAttack()
-{
-	// raise the looped charged attack flag
-	bHasLoopedChargedAttack = true;
-
-	// jump to either the loop or the attack section depending on whether we're still holding the charge button
-	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
-	{
-		AnimInstance->Montage_JumpToSection(bIsChargingAttack ? ChargeLoopSection : ChargeAttackSection, ChargedAttackMontage);
-	}
-}
-
-void ACombatCharacter::NotifyEnemiesOfIncomingAttack()
-{
-	// sweep for objects in front of the character to be hit by the attack
-	TArray<FHitResult> OutHits;
-
-	// start at the actor location, sweep forward
-	const FVector TraceStart = GetActorLocation();
-	const FVector TraceEnd = TraceStart + (GetActorForwardVector() * DangerTraceDistance);
-
-	// check for pawn object types only
-	FCollisionObjectQueryParams ObjectParams;
-	ObjectParams.AddObjectTypesToQuery(ECC_Pawn);
-
-	// use a sphere shape for the sweep
-	FCollisionShape CollisionShape;
-	CollisionShape.SetSphere(DangerTraceRadius);
-
-	// ignore self
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActor(this);
-
-	if (GetWorld()->SweepMultiByObjectType(OutHits, TraceStart, TraceEnd, FQuat::Identity, ObjectParams, CollisionShape, QueryParams))
-	{
-		// iterate over each object hit
-		for (const FHitResult& CurrentHit : OutHits)
-		{
-			// check if we've hit a damageable actor
-			ICombatDamageable* Damageable = Cast<ICombatDamageable>(CurrentHit.GetActor());
-
-			if (Damageable)
-			{
-				// notify the enemy
-				Damageable->NotifyDanger(GetActorLocation(), this);
-			}
-		}
-	}
-}
-
-void ACombatCharacter::ApplyDamage(float Damage, AActor* DamageCauser, const FVector& DamageLocation, const FVector& DamageImpulse)
-{
-	// pass the damage event to the actor
-	FDamageEvent DamageEvent;
-	const float ActualDamage = TakeDamage(Damage, DamageEvent, nullptr, DamageCauser);
-
-	// only process knockback and effects if we received nonzero damage
-	if (ActualDamage > 0.0f)
-	{
-		// apply the knockback impulse
-		GetCharacterMovement()->AddImpulse(DamageImpulse, true);
-
-		// is the character ragdolling?
-		if (GetMesh()->IsSimulatingPhysics())
-		{
-			// apply an impulse to the ragdoll
-			GetMesh()->AddImpulseAtLocation(DamageImpulse * GetMesh()->GetMass(), DamageLocation);
-		}
-
-		// pass control to BP to play effects, etc.
-		ReceivedDamage(ActualDamage, DamageLocation, DamageImpulse.GetSafeNormal());
-	}
-
+	// let the charged attack ability know the input was released
+	SendAbilityInputEvent(TAG_Event_InputSecondaryReleased);
 }
 
 void ACombatCharacter::HandleDeath()
@@ -410,24 +174,11 @@ void ACombatCharacter::HandleDeath()
 	// enable full ragdoll physics
 	GetMesh()->SetSimulatePhysics(true);
 
-	// hide the life bar
-	//LifeBar->SetHiddenInGame(true);
-
 	// pull back the camera
 	GetCameraBoom()->TargetArmLength = DeathCameraDistance;
 
 	// schedule respawning
 	GetWorld()->GetTimerManager().SetTimer(RespawnTimer, this, &ACombatCharacter::RespawnCharacter, RespawnTime, false);
-}
-
-void ACombatCharacter::ApplyHealing(float Healing, AActor* Healer)
-{
-	// stub
-}
-
-void ACombatCharacter::NotifyDanger(const FVector& DangerLocation, AActor* DangerSource)
-{
-	// stub
 }
 
 void ACombatCharacter::RespawnCharacter()
@@ -436,75 +187,15 @@ void ACombatCharacter::RespawnCharacter()
 	Destroy();
 }
 
-float ACombatCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
-{
-	Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
-	
-	// have we run out of HP?
-	if (AttributeSet->GetHealth() <= 0.0f)
-	{
-		// die
-		HandleDeath();
-	}
-	else
-	{
-		// update the life bar
-		//LifeBarWidget->SetLifePercentage(AttributeSet->GetHealth() / AttributeSet->GetHealthMax());
-
-		// enable partial ragdoll physics, but keep the pelvis vertical
-		GetMesh()->SetPhysicsBlendWeight(0.5f);
-		GetMesh()->SetBodySimulatePhysics(PelvisBoneName, false);
-	}
-
-	// return the received damage amount
-	return Damage;
-}
-
-void ACombatCharacter::Landed(const FHitResult& Hit)
-{
-	Super::Landed(Hit);
-	
-	// is the character still alive?
-	if (AttributeSet->GetHealth() >= 0.0f)
-	{
-		// disable ragdoll physics
-		GetMesh()->SetPhysicsBlendWeight(0.0f);
-	}
-}
-
 void ACombatCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// get the life bar from the widget component
-	//LifeBarWidget = Cast<UCombatLifeBar>(LifeBar->GetUserWidgetObject());
-	//check(LifeBarWidget);
 
 	// initialize the camera
 	GetCameraBoom()->TargetArmLength = DefaultCameraDistance;
 
 	// save the relative transform for the mesh so we can reset the ragdoll later
 	MeshStartingTransform = GetMesh()->GetRelativeTransform();
-
-	// set the life bar color
-	//LifeBarWidget->SetBarColor(LifeBarColor);
-
-	// reset HP to maximum
-	ResetHP();
-	
-	if (AbilitySystemComponent)
-	{
-		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UCharacterAttributeSet::GetHealthAttribute())
-			.AddLambda([this](const FOnAttributeChangeData& Data)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Health changed: %.2f -> %.2f"), Data.OldValue, Data.NewValue);
-			// Add gameplay logic here, for example:
-			if(Data.NewValue <= 0.f)
-			{
-				// Trigger death logic, animation, etc.
-			}
-		});
-	}
 }
 
 void ACombatCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -535,14 +226,10 @@ void ACombatCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		// Charged Attack
 		EnhancedInputComponent->BindAction(ChargedAttackAction, ETriggerEvent::Started, this, &ACombatCharacter::ChargedAttackPressed);
 		EnhancedInputComponent->BindAction(ChargedAttackAction, ETriggerEvent::Completed, this, &ACombatCharacter::ChargedAttackReleased);
-						
+
 		// Jump Action
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACombatCharacter::Jump );
-		
-		// Charged Attack
-		EnhancedInputComponent->BindAction(ChargedAttackAction, ETriggerEvent::Started, this, &ACombatCharacter::ChargedAttackPressed);
-		EnhancedInputComponent->BindAction(ChargedAttackAction, ETriggerEvent::Completed, this, &ACombatCharacter::ChargedAttackReleased);
-		
+
 		// Camera Side Toggle
 		EnhancedInputComponent->BindAction(ToggleCameraAction, ETriggerEvent::Triggered, this, &ACombatCharacter::ToggleCamera);
 	}
@@ -558,4 +245,3 @@ void ACombatCharacter::NotifyControllerChanged()
 		PC->SetRespawnTransform(GetActorTransform());
 	}
 }
-

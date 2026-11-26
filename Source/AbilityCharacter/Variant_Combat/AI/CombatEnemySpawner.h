@@ -18,7 +18,7 @@ class ACombatEnemy;
  *  When the last spawned enemy dies, the spawner can also activate other ICombatActivatables
  */
 UCLASS(abstract)
-class ACombatEnemySpawner : public AActor, public ICombatActivatable
+class ABILITYCHARACTER_API ACombatEnemySpawner : public AActor, public ICombatActivatable
 {
 	GENERATED_BODY()
 	

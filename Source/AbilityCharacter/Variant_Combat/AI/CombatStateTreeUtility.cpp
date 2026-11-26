@@ -12,6 +12,23 @@
 #include "Kismet/GameplayStatics.h"
 #include "StateTreeAsyncExecutionContext.h"
 
+bool FStateTreeCharacterIsAliveCondition::TestCondition(FStateTreeExecutionContext& Context) const
+{
+	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
+
+	bool bFound;
+	bool bCondition = InstanceData.Character->AbilitySystemComponent->GetGameplayAttributeValue(UCharacterAttributeSet::GetHealthAttribute(), bFound)>0;
+
+	return InstanceData.bNot ? !bCondition : bCondition;
+}
+
+#if WITH_EDITOR
+FText FStateTreeCharacterIsAliveCondition::GetDescription(const FGuid& ID, FStateTreeDataView InstanceDataView, const IStateTreeBindingLookup& BindingLookup, EStateTreeNodeFormatting Formatting /*= EStateTreeNodeFormatting::Text*/) const
+{
+	return FText::FromString("<b>Is Character Alive</b>");
+}
+#endif // WITH_EDITOR
+
 bool FStateTreeCharacterGroundedCondition::TestCondition(FStateTreeExecutionContext& Context) const
 {
 	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);

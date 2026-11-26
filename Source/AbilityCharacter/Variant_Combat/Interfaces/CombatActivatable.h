@@ -16,7 +16,7 @@ class UCombatActivatable : public UInterface
 	GENERATED_BODY()
 };
 
-class ICombatActivatable
+class ABILITYCHARACTER_API ICombatActivatable
 {
 	GENERATED_BODY()
 

@@ -9,14 +9,60 @@
 #include "CombatStateTreeUtility.generated.h"
 
 class ACharacter;
+class ACharacterBase;
 class AAIController;
 class ACombatEnemy;
+
+
+/**
+ *  Instance data struct for the FStateTreeCharacterIsAliveCondition condition
+ */
+USTRUCT()
+struct ABILITYCHARACTER_API FStateTreeCharacterIsAliveConditionInstanceData
+{
+	GENERATED_BODY()
+	
+	/** Character to check grounded status on */
+	UPROPERTY(EditAnywhere, Category = "Context")
+	ACharacterBase* Character;
+
+	/** If true, the condition passes if the character is not grounded instead */
+	UPROPERTY(EditAnywhere, Category = "Condition")
+	bool bNot = false;
+};
+UE_STATETREE_ZEROED_TRIVIALLY_COPIED_NO_DESTRUCTOR_INSTANCEDATA(FStateTreeCharacterIsAliveConditionInstanceData);
+
+/**
+ *  StateTree condition to check if the character is grounded
+ */
+USTRUCT(DisplayName = "Character is Alive")
+struct ABILITYCHARACTER_API FStateTreeCharacterIsAliveCondition : public FStateTreeConditionCommonBase
+{
+	GENERATED_BODY()
+
+	/** Set the instance data type */
+	using FInstanceDataType = FStateTreeCharacterIsAliveConditionInstanceData;
+	virtual const UStruct* GetInstanceDataType() const override { return FInstanceDataType::StaticStruct(); }
+
+	/** Default constructor */
+	FStateTreeCharacterIsAliveCondition() = default;
+	
+	/** Tests the StateTree condition */
+	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;
+
+#if WITH_EDITOR
+
+	/** Provides the description string */
+	virtual FText GetDescription(const FGuid& ID, FStateTreeDataView InstanceDataView, const IStateTreeBindingLookup& BindingLookup, EStateTreeNodeFormatting Formatting = EStateTreeNodeFormatting::Text) const override;
+#endif
+
+};
 
 /**
  *  Instance data struct for the FStateTreeCharacterGroundedCondition condition
  */
 USTRUCT()
-struct FStateTreeCharacterGroundedConditionInstanceData
+struct ABILITYCHARACTER_API FStateTreeCharacterGroundedConditionInstanceData
 {
 	GENERATED_BODY()
 	
@@ -28,13 +74,13 @@ struct FStateTreeCharacterGroundedConditionInstanceData
 	UPROPERTY(EditAnywhere, Category = "Condition")
 	bool bMustBeOnAir = false;
 };
-STATETREE_POD_INSTANCEDATA(FStateTreeCharacterGroundedConditionInstanceData);
+UE_STATETREE_ZEROED_TRIVIALLY_COPIED_NO_DESTRUCTOR_INSTANCEDATA(FStateTreeCharacterGroundedConditionInstanceData);
 
 /**
  *  StateTree condition to check if the character is grounded
  */
 USTRUCT(DisplayName = "Character is Grounded")
-struct FStateTreeCharacterGroundedCondition : public FStateTreeConditionCommonBase
+struct ABILITYCHARACTER_API FStateTreeCharacterGroundedCondition : public FStateTreeConditionCommonBase
 {
 	GENERATED_BODY()
 
@@ -62,7 +108,7 @@ struct FStateTreeCharacterGroundedCondition : public FStateTreeConditionCommonBa
  *  Instance data struct for the FStateTreeIsInDangerCondition condition
  */
 USTRUCT()
-struct FStateTreeIsInDangerConditionInstanceData
+struct ABILITYCHARACTER_API FStateTreeIsInDangerConditionInstanceData
 {
 	GENERATED_BODY()
 	
@@ -82,13 +128,13 @@ struct FStateTreeIsInDangerConditionInstanceData
 	UPROPERTY(EditAnywhere, Category = "Parameters", meta = (Units = "degrees"))
 	float DangerSightConeAngle = 120.0f;
 };
-STATETREE_POD_INSTANCEDATA(FStateTreeIsInDangerConditionInstanceData);
+UE_STATETREE_ZEROED_TRIVIALLY_COPIED_NO_DESTRUCTOR_INSTANCEDATA(FStateTreeIsInDangerConditionInstanceData);
 
 /**
  *  StateTree condition to check if the character is about to be hit by an attack
  */
 USTRUCT(DisplayName = "Character is in Danger")
-struct FStateTreeIsInDangerCondition : public FStateTreeConditionCommonBase
+struct ABILITYCHARACTER_API FStateTreeIsInDangerCondition : public FStateTreeConditionCommonBase
 {
 	GENERATED_BODY()
 
@@ -116,7 +162,7 @@ struct FStateTreeIsInDangerCondition : public FStateTreeConditionCommonBase
  *  Instance data struct for the Combat StateTree tasks
  */
 USTRUCT()
-struct FStateTreeAttackInstanceData
+struct ABILITYCHARACTER_API FStateTreeAttackInstanceData
 {
 	GENERATED_BODY()
 
@@ -129,7 +175,7 @@ struct FStateTreeAttackInstanceData
  *  StateTree task to perform a combo attack
  */
 USTRUCT(meta=(DisplayName="Combo Attack", Category="Combat"))
-struct FStateTreeComboAttackTask : public FStateTreeTaskCommonBase
+struct ABILITYCHARACTER_API FStateTreeComboAttackTask : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
 
@@ -152,7 +198,7 @@ struct FStateTreeComboAttackTask : public FStateTreeTaskCommonBase
  *  StateTree task to perform a charged attack
  */
 USTRUCT(meta=(DisplayName="Charged Attack", Category="Combat"))
-struct FStateTreeChargedAttackTask : public FStateTreeTaskCommonBase
+struct ABILITYCHARACTER_API FStateTreeChargedAttackTask : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
 
@@ -175,7 +221,7 @@ struct FStateTreeChargedAttackTask : public FStateTreeTaskCommonBase
  *  StateTree task to wait for the character to land
  */
 USTRUCT(meta=(DisplayName="Wait for Landing", Category="Combat"))
-struct FStateTreeWaitForLandingTask : public FStateTreeTaskCommonBase
+struct ABILITYCHARACTER_API FStateTreeWaitForLandingTask : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
 
@@ -200,7 +246,7 @@ struct FStateTreeWaitForLandingTask : public FStateTreeTaskCommonBase
  *  Instance data struct for the Face Towards Actor StateTree task
  */
 USTRUCT()
-struct FStateTreeFaceActorInstanceData
+struct ABILITYCHARACTER_API FStateTreeFaceActorInstanceData
 {
 	GENERATED_BODY()
 
@@ -217,7 +263,7 @@ struct FStateTreeFaceActorInstanceData
  *  StateTree task to face an AI-Controlled Pawn towards an Actor
  */
 USTRUCT(meta=(DisplayName="Face Towards Actor", Category="Combat"))
-struct FStateTreeFaceActorTask : public FStateTreeTaskCommonBase
+struct ABILITYCHARACTER_API FStateTreeFaceActorTask : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
 
@@ -242,7 +288,7 @@ struct FStateTreeFaceActorTask : public FStateTreeTaskCommonBase
  *  Instance data struct for the Face Towards Location StateTree task
  */
 USTRUCT()
-struct FStateTreeFaceLocationInstanceData
+struct ABILITYCHARACTER_API FStateTreeFaceLocationInstanceData
 {
 	GENERATED_BODY()
 
@@ -259,7 +305,7 @@ struct FStateTreeFaceLocationInstanceData
  *  StateTree task to face an AI-Controlled Pawn towards a world location
  */
 USTRUCT(meta=(DisplayName="Face Towards Location", Category="Combat"))
-struct FStateTreeFaceLocationTask : public FStateTreeTaskCommonBase
+struct ABILITYCHARACTER_API FStateTreeFaceLocationTask : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
 
@@ -284,7 +330,7 @@ struct FStateTreeFaceLocationTask : public FStateTreeTaskCommonBase
  *  Instance data struct for the Set Character Speed StateTree task
  */
 USTRUCT()
-struct FStateTreeSetCharacterSpeedInstanceData
+struct ABILITYCHARACTER_API FStateTreeSetCharacterSpeedInstanceData
 {
 	GENERATED_BODY()
 
@@ -301,7 +347,7 @@ struct FStateTreeSetCharacterSpeedInstanceData
  *  StateTree task to change a Character's ground speed
  */
 USTRUCT(meta=(DisplayName="Set Character Speed", Category="Combat"))
-struct FStateTreeSetCharacterSpeedTask : public FStateTreeTaskCommonBase
+struct ABILITYCHARACTER_API FStateTreeSetCharacterSpeedTask : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
 
@@ -323,7 +369,7 @@ struct FStateTreeSetCharacterSpeedTask : public FStateTreeTaskCommonBase
  *  Instance data struct for the Get Player Info task
  */
 USTRUCT()
-struct FStateTreeGetPlayerInfoInstanceData
+struct ABILITYCHARACTER_API FStateTreeGetPlayerInfoInstanceData
 {
 	GENERATED_BODY()
 
@@ -348,7 +394,7 @@ struct FStateTreeGetPlayerInfoInstanceData
  *  StateTree task to get information about the player character
  */
 USTRUCT(meta=(DisplayName="GetPlayerInfo", Category="Combat"))
-struct FStateTreeGetPlayerInfoTask : public FStateTreeTaskCommonBase
+struct ABILITYCHARACTER_API FStateTreeGetPlayerInfoTask : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
 

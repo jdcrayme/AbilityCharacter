@@ -4,13 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "HasActorInterface.h"
 #include "CombatLifeBar.generated.h"
 
 /**
  *  A basic life bar user widget.
  */
 UCLASS(abstract)
-class UCombatLifeBar : public UUserWidget
+class ABILITYCHARACTER_API UCombatLifeBar : public UUserWidget, public IHasActorInterface
 {
 	GENERATED_BODY()
 

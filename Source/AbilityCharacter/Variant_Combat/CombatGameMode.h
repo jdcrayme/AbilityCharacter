@@ -10,7 +10,7 @@
  *  Simple GameMode for a third person combat game
  */
 UCLASS(abstract)
-class ACombatGameMode : public AGameModeBase
+class ABILITYCHARACTER_API ACombatGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 	

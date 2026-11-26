@@ -17,7 +17,7 @@ class UCombatDamageable : public UInterface
 	GENERATED_BODY()
 };
 
-class ICombatDamageable
+class ABILITYCHARACTER_API ICombatDamageable
 {
 	GENERATED_BODY()
 

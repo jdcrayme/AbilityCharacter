@@ -2,17 +2,21 @@
 
 
 #include "AnimNotify_CheckCombo.h"
-#include "CombatAttacker.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "CombatGameplayTags.h"
 #include "Components/SkeletalMeshComponent.h"
 
 void UAnimNotify_CheckCombo::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
-	// cast the owner to the attacker interface
-	if (ICombatAttacker* AttackerInterface = Cast<ICombatAttacker>(MeshComp->GetOwner()))
-	{
-		// tell the actor to check for combo string
-		AttackerInterface->CheckCombo();
-	}
+	AActor* Owner = MeshComp->GetOwner();
+	if (!Owner) return;
+
+	// ask the running combo attack ability whether to continue the string
+	FGameplayEventData EventData;
+	EventData.EventTag = TAG_Event_CheckCombo;
+	EventData.Instigator = Owner;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Owner, TAG_Event_CheckCombo, EventData);
 }
 
 FString UAnimNotify_CheckCombo::GetNotifyName_Implementation() const

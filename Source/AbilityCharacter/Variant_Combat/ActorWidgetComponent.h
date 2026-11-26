@@ -9,7 +9,8 @@
 /**
  * 
  */
-UCLASS()
+
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class ABILITYCHARACTER_API UActorWidgetComponent : public UWidgetComponent
 {
 	GENERATED_BODY()

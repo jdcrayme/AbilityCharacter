@@ -8,7 +8,7 @@
 #include "CombatCheckpointVolume.generated.h"
 
 UCLASS(abstract)
-class ACombatCheckpointVolume : public AActor
+class ABILITYCHARACTER_API ACombatCheckpointVolume : public AActor
 {
 	GENERATED_BODY()
 	

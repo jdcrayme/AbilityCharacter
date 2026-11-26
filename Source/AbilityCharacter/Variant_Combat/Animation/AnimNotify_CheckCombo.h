@@ -10,7 +10,7 @@
  *  AnimNotify to perform a combo string check.
  */
 UCLASS()
-class UAnimNotify_CheckCombo : public UAnimNotify
+class ABILITYCHARACTER_API UAnimNotify_CheckCombo : public UAnimNotify
 {
 	GENERATED_BODY()
 	

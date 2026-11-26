@@ -9,7 +9,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnCooldownChanged, FGameplayTag, CooldownTag, float, TimeRemaining, float, Duration);
 
 UCLASS(BlueprintType, meta = (ExposedAsyncProxy = AsyncTask))
-class UAsyncTaskCooldownChanged : public UBlueprintAsyncActionBase
+class ABILITYCHARACTER_API UAsyncTaskCooldownChanged : public UBlueprintAsyncActionBase
 {
 	GENERATED_BODY()
 public:

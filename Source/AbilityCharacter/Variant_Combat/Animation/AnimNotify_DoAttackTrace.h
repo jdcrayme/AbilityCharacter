@@ -9,16 +9,18 @@
 /**
  *  AnimNotify to tell the actor to perform an attack trace check to look for targets to damage.
  */
-UCLASS()
-class UAnimNotify_DoAttackTrace : public UAnimNotify
+	UCLASS()
+class ABILITYCHARACTER_API UAnimNotify_DoAttackTrace : public UAnimNotify
 {
 	GENERATED_BODY()
-	
-protected:
+
+public:
 
 	/** Source bone for the attack trace */
 	UPROPERTY(EditAnywhere, Category="Attack")
 	FName AttackBoneName;
+
+protected:
 
 public:
 

@@ -8,15 +8,18 @@
 
 class UStaticMeshComponent;
 class UPrimitiveComponent;
+class UGameplayEffect;
 
 /**
- *  A basic actor that applies damage on contact through the ICombatDamageable interface. 
+ *  A basic actor that applies damage on contact. Targets with an ability system
+ *  component receive a standard damage GameplayEffect; anything else falls back
+ *  to the ICombatDamageable interface.
  */
 UCLASS(abstract)
-class ACombatLavaFloor : public AActor
+class ABILITYCHARACTER_API ACombatLavaFloor : public AActor
 {
 	GENERATED_BODY()
-	
+
 	/** Floor mesh */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* Mesh;
@@ -27,7 +30,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Damage")
 	float Damage = 10000.0f;
 
-public:	
+	/** Gameplay effect applied to targets with an ability system component */
+	UPROPERTY(EditDefaultsOnly, Category="Damage")
+	TSubclassOf<UGameplayEffect> DamageEffectClass;
+
+public:
 
 	/** Constructor */
 	ACombatLavaFloor();
