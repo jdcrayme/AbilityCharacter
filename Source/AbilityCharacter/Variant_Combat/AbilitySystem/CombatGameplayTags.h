@@ -41,6 +41,9 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_InputSecondaryPressed);
 /** Gameplay event sent when the secondary attack input is released */
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_InputSecondaryReleased);
 
+/** Gameplay event sent when the use input is pressed; consumed by the passive use ability */
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_InputUsePressed);
+
 /** Gameplay event sent when the player walks into a combat arena */
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_ArenaEntered);
 

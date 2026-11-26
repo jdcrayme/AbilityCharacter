@@ -12,6 +12,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Data_StaminaCost, "Data.StaminaCost");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_InputPrimaryPressed, "Combat.Input.PrimaryPressed");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_InputSecondaryPressed, "Combat.Input.SecondaryPressed");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_InputSecondaryReleased, "Combat.Input.SecondaryReleased");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_InputUsePressed, "Combat.Input.UsePressed");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_ArenaEntered, "Combat.Event.ArenaEntered");
 

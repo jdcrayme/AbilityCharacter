@@ -65,6 +65,13 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Ability System|Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
 
+	/** Passive interaction ability granted with the default abilities: ray casts
+	 *  ahead of the character for usable action volumes (CombatUsable) and shows
+	 *  a use prompt. Granted separately so Blueprint subclasses that override
+	 *  the DefaultAbilities array still get interactions. Set to None to disable. */
+	UPROPERTY(EditDefaultsOnly, Category = "Ability System|Abilities")
+	TSubclassOf<UGameplayAbility> DefaultUseAbility;
+
 	UPROPERTY(EditAnywhere, Category = "Ability System|Input")
 	TArray<FInputActionAbilityMapping> AbilityInputMappings;
 

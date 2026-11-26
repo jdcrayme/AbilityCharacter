@@ -105,6 +105,12 @@ void ACombatCharacter::ChargedAttackReleased()
 	DoChargedAttackEnd();
 }
 
+void ACombatCharacter::UsePressed()
+{
+	// route the input
+	DoUseStart();
+}
+
 void ACombatCharacter::ToggleCamera()
 {
 	// call the BP hook
@@ -164,6 +170,13 @@ void ACombatCharacter::DoChargedAttackEnd()
 {
 	// let the charged attack ability know the input was released
 	SendAbilityInputEvent(TAG_Event_InputSecondaryReleased);
+}
+
+void ACombatCharacter::DoUseStart()
+{
+	// forward the input to the ability system: the passive use ability listens
+	// for this event and uses the action volume the character is looking at
+	SendAbilityInputEvent(TAG_Event_InputUsePressed);
 }
 
 void ACombatCharacter::HandleDeath()
@@ -226,6 +239,12 @@ void ACombatCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		// Charged Attack
 		EnhancedInputComponent->BindAction(ChargedAttackAction, ETriggerEvent::Started, this, &ACombatCharacter::ChargedAttackPressed);
 		EnhancedInputComponent->BindAction(ChargedAttackAction, ETriggerEvent::Completed, this, &ACombatCharacter::ChargedAttackReleased);
+
+		// Use Action
+		if (UseAction)
+		{
+			EnhancedInputComponent->BindAction(UseAction, ETriggerEvent::Started, this, &ACombatCharacter::UsePressed);
+		}
 
 		// Jump Action
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACombatCharacter::Jump );

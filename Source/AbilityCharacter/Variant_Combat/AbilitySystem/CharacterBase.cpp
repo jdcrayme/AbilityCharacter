@@ -14,6 +14,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimInstance.h"
 #include "CombatEffectContext.h"
+#include "AbilitySystem/UseAbility.h"
 
 ACharacterBase::ACharacterBase()
 {
@@ -25,6 +26,10 @@ ACharacterBase::ACharacterBase()
 
 	// partial ragdoll reactions keep the pelvis upright
 	PelvisBoneName = TEXT("pelvis");
+
+	// the passive use ability is granted to every combat character; it only shows
+	// UI for locally controlled players
+	DefaultUseAbility = UUseAbility::StaticClass();
 }
 
 void ACharacterBase::InitializeAttributes()
@@ -53,6 +58,13 @@ void ACharacterBase::GrantDefaultAbilities()
 		{
 			GrantAbility(AbilityClass, 1);
 		}
+	}
+
+	// the passive use ability is granted separately so Blueprint subclasses that
+	// override the DefaultAbilities array still get interactions
+	if (DefaultUseAbility)
+	{
+		GrantAbility(DefaultUseAbility, 1);
 	}
 }
 

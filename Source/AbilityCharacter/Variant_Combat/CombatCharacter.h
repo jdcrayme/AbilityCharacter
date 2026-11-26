@@ -65,6 +65,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category ="Input")
 	UInputAction* ChargedAttackAction;
 
+	/** Use Input Action */
+	UPROPERTY(EditAnywhere, Category ="Input")
+	UInputAction* UseAction;
+
 	/** Toggle Camera Side Input Action */
 	UPROPERTY(EditAnywhere, Category ="Input")
 	UInputAction* ToggleCameraAction;
@@ -113,6 +117,9 @@ protected:
 	/** Called for combo attack input released */
 	void ChargedAttackReleased();
 
+	/** Called for use input */
+	void UsePressed();
+
 	/** Called for toggle camera side input */
 	void ToggleCamera();
 
@@ -145,6 +152,10 @@ public:
 	/** Handles charged attack released from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoChargedAttackEnd();
+
+	/** Handles use pressed from either controls or UI interfaces */
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoUseStart();
 
 protected:
 
