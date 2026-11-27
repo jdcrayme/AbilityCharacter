@@ -1,7 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "CombatActionVolume.h"
-#include "CombatActivatable.h"
+#include "CombatActionVolumeComponent.h"
 #include "Components/BoxComponent.h"
 
 ACombatActionVolume::ACombatActionVolume()
@@ -26,39 +26,8 @@ ACombatActionVolume::ACombatActionVolume()
 	// the volume itself is invisible in game; the editor still draws its bounds
 	Box->SetHiddenInGame(true);
 
-	// default prompt text
-	UseText = NSLOCTEXT("CombatActionVolume", "DefaultUseText", "Use");
-}
-
-bool ACombatActionVolume::CanUse_Implementation(AActor* )
-{
-	// single-use volumes stop being usable once they have been used
-	return !bSingleUse || !bUsed;
-}
-
-FText ACombatActionVolume::GetUseText_Implementation(AActor* )
-{
-	return UseText;
-}
-
-void ACombatActionVolume::Use_Implementation(AActor* User)
-{
-	if (bSingleUse)
-	{
-		bUsed = true;
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("[ActionVolume] %s was used by %s"), *GetName(), User ? *User->GetName() : TEXT("nobody"));
-
-	// notify listeners (Blueprints, StateTree, UI...)
-	OnUsed.Broadcast(User);
-
-	// activate the linked actors through the existing activation interface
-	for (AActor* ActorToActivate : ActorsToActivate)
-	{
-		if (ICombatActivatable* Activatable = Cast<ICombatActivatable>(ActorToActivate))
-		{
-			Activatable->ActivateInteraction(User);
-		}
-	}
+	// the interaction lives on the component so any actor can host one too;
+	// this actor's box already serves as the trace target
+	Volume = CreateDefaultSubobject<UCombatActionVolumeComponent>(TEXT("Volume"));
+	Volume->bCreateTraceBox = false;
 }

@@ -29,161 +29,150 @@ DECLARE_LOG_CATEGORY_EXTERN(LogCombatCharacter, Log, All);
 UCLASS(abstract)
 class ABILITYCHARACTER_API ACombatCharacter : public ACharacterBase
 {
-	GENERATED_BODY()
+        GENERATED_BODY()
 
-	/** Camera boom positioning the camera behind the character */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
-	USpringArmComponent* CameraBoom;
+        /** Camera boom positioning the camera behind the character */
+        UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+        USpringArmComponent* CameraBoom;
 
-	/** Follow camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
-	UCameraComponent* FollowCamera;
-
-protected:
-
-	/** Jump Input Action */
-	UPROPERTY(EditAnywhere, Category ="Input")
-	UInputAction* JumpAction;
-
-	/** Move Input Action */
-	UPROPERTY(EditAnywhere, Category ="Input")
-	UInputAction* MoveAction;
-
-	/** Look Input Action */
-	UPROPERTY(EditAnywhere, Category ="Input")
-	UInputAction* LookAction;
-
-	/** Mouse Look Input Action */
-	UPROPERTY(EditAnywhere, Category="Input")
-	UInputAction* MouseLookAction;
-
-	/** Combo Attack Input Action */
-	UPROPERTY(EditAnywhere, Category ="Input")
-	UInputAction* ComboAttackAction;
-
-	/** Charged Attack Input Action */
-	UPROPERTY(EditAnywhere, Category ="Input")
-	UInputAction* ChargedAttackAction;
-
-	/** Use Input Action */
-	UPROPERTY(EditAnywhere, Category ="Input")
-	UInputAction* UseAction;
-
-	/** Toggle Camera Side Input Action */
-	UPROPERTY(EditAnywhere, Category ="Input")
-	UInputAction* ToggleCameraAction;
-
-	/** Life bar widget fill color */
-	UPROPERTY(EditAnywhere, Category="Damage")
-	FLinearColor LifeBarColor;
-
-	/** Camera boom length while the character is dead */
-	UPROPERTY(EditAnywhere, Category="Camera", meta = (ClampMin = 0, ClampMax = 1000, Units = "cm"))
-	float DeathCameraDistance = 400.0f;
-
-	/** Camera boom length when the character respawns */
-	UPROPERTY(EditAnywhere, Category="Camera", meta = (ClampMin = 0, ClampMax = 1000, Units = "cm"))
-	float DefaultCameraDistance = 100.0f;
-
-	/** Time to wait before respawning the character */
-	UPROPERTY(EditAnywhere, Category="Respawn", meta = (ClampMin = 0, ClampMax = 10, Units = "s"))
-	float RespawnTime = 3.0f;
-
-	/** Character respawn timer */
-	FTimerHandle RespawnTimer;
-
-	/** Copy of the mesh's transform so we can reset it after ragdoll animations */
-	FTransform MeshStartingTransform;
-
-public:
-
-	/** Constructor */
-	ACombatCharacter();
+        /** Follow camera */
+        UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+        UCameraComponent* FollowCamera;
 
 protected:
 
-	/** Called for movement input */
-	void Move(const FInputActionValue& Value);
+        /** Jump Input Action */
+        UPROPERTY(EditAnywhere, Category ="Input")
+        UInputAction* JumpAction;
 
-	/** Called for looking input */
-	void Look(const FInputActionValue& Value);
+        /** Move Input Action */
+        UPROPERTY(EditAnywhere, Category ="Input")
+        UInputAction* MoveAction;
 
-	/** Called for combo attack input */
-	void ComboAttackPressed();
+        /** Look Input Action */
+        UPROPERTY(EditAnywhere, Category ="Input")
+        UInputAction* LookAction;
 
-	/** Called for combo attack input pressed */
-	void ChargedAttackPressed();
+        /** Mouse Look Input Action */
+        UPROPERTY(EditAnywhere, Category="Input")
+        UInputAction* MouseLookAction;
 
-	/** Called for combo attack input released */
-	void ChargedAttackReleased();
+        /** Combo Attack Input Action */
+        UPROPERTY(EditAnywhere, Category ="Input")
+        UInputAction* ComboAttackAction;
 
-	/** Called for use input */
-	void UsePressed();
+        /** Charged Attack Input Action */
+        UPROPERTY(EditAnywhere, Category ="Input")
+        UInputAction* ChargedAttackAction;
 
-	/** Called for toggle camera side input */
-	void ToggleCamera();
+        /** Toggle Camera Side Input Action */
+        UPROPERTY(EditAnywhere, Category ="Input")
+        UInputAction* ToggleCameraAction;
 
-	/** BP hook to animate the camera side switch */
-	UFUNCTION(BlueprintImplementableEvent, Category="Combat")
-	void BP_ToggleCamera();
+        /** Life bar widget fill color */
+        UPROPERTY(EditAnywhere, Category="Damage")
+        FLinearColor LifeBarColor;
+
+        /** Camera boom length while the character is dead */
+        UPROPERTY(EditAnywhere, Category="Camera", meta = (ClampMin = 0, ClampMax = 1000, Units = "cm"))
+        float DeathCameraDistance = 400.0f;
+
+        /** Camera boom length when the character respawns */
+        UPROPERTY(EditAnywhere, Category="Camera", meta = (ClampMin = 0, ClampMax = 1000, Units = "cm"))
+        float DefaultCameraDistance = 100.0f;
+
+        /** Time to wait before respawning the character */
+        UPROPERTY(EditAnywhere, Category="Respawn", meta = (ClampMin = 0, ClampMax = 10, Units = "s"))
+        float RespawnTime = 3.0f;
+
+        /** Character respawn timer */
+        FTimerHandle RespawnTimer;
+
+        /** Copy of the mesh's transform so we can reset it after ragdoll animations */
+        FTransform MeshStartingTransform;
 
 public:
 
-	/** Handles move inputs from either controls or UI interfaces */
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoMove(float Right, float Forward);
-
-	/** Handles look inputs from either controls or UI interfaces */
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoLook(float Yaw, float Pitch);
-
-	/** Handles combo attack pressed from either controls or UI interfaces */
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoComboAttackStart();
-
-	/** Handles combo attack released from either controls or UI interfaces */
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoComboAttackEnd();
-
-	/** Handles charged attack pressed from either controls or UI interfaces */
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoChargedAttackStart();
-
-	/** Handles charged attack released from either controls or UI interfaces */
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoChargedAttackEnd();
-
-	/** Handles use pressed from either controls or UI interfaces */
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoUseStart();
+        /** Constructor */
+        ACombatCharacter();
 
 protected:
 
-	/** Called from the respawn timer to destroy and re-create the character */
-	void RespawnCharacter();
+        /** Called for movement input */
+        void Move(const FInputActionValue& Value);
+
+        /** Called for looking input */
+        void Look(const FInputActionValue& Value);
+
+        /** Called for combo attack input */
+        void ComboAttackPressed();
+
+        /** Called for combo attack input pressed */
+        void ChargedAttackPressed();
+
+        /** Called for combo attack input released */
+        void ChargedAttackReleased();
+
+        /** Called for toggle camera side input */
+        void ToggleCamera();
+
+        /** BP hook to animate the camera side switch */
+        UFUNCTION(BlueprintImplementableEvent, Category="Combat")
+        void BP_ToggleCamera();
 
 public:
 
-	/** Initialization */
-	virtual void BeginPlay() override;
+        /** Handles move inputs from either controls or UI interfaces */
+        UFUNCTION(BlueprintCallable, Category="Input")
+        virtual void DoMove(float Right, float Forward);
 
-	/** Cleanup */
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+        /** Handles look inputs from either controls or UI interfaces */
+        UFUNCTION(BlueprintCallable, Category="Input")
+        virtual void DoLook(float Yaw, float Pitch);
 
-	/** Handles input bindings */
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+        /** Handles combo attack pressed from either controls or UI interfaces */
+        UFUNCTION(BlueprintCallable, Category="Input")
+        virtual void DoComboAttackStart();
 
-	/** Handles possessed initialization */
-	virtual void NotifyControllerChanged() override;
+        /** Handles combo attack released from either controls or UI interfaces */
+        UFUNCTION(BlueprintCallable, Category="Input")
+        virtual void DoComboAttackEnd();
 
-	/** Handles death events */
-	virtual void HandleDeath() override;
+        /** Handles charged attack pressed from either controls or UI interfaces */
+        UFUNCTION(BlueprintCallable, Category="Input")
+        virtual void DoChargedAttackStart();
+
+        /** Handles charged attack released from either controls or UI interfaces */
+        UFUNCTION(BlueprintCallable, Category="Input")
+        virtual void DoChargedAttackEnd();
+
+protected:
+
+        /** Called from the respawn timer to destroy and re-create the character */
+        void RespawnCharacter();
 
 public:
 
-	/** Returns CameraBoom subobject **/
-	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+        /** Initialization */
+        virtual void BeginPlay() override;
 
-	/** Returns FollowCamera subobject **/
-	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+        /** Cleanup */
+        virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+        /** Handles input bindings */
+        virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+        /** Handles possessed initialization */
+        virtual void NotifyControllerChanged() override;
+
+        /** Handles death events */
+        virtual void HandleDeath() override;
+
+public:
+
+        /** Returns CameraBoom subobject **/
+        FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+
+        /** Returns FollowCamera subobject **/
+        FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 };
