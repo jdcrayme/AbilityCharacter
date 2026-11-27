@@ -9,7 +9,7 @@
 
 /**
  *  Interface for pawns that can turn an ability input event tag into the key
- *  label bound to it (e.g. "E" for Combat.Input.UsePressed), so prompts and
+ *  label bound to it (e.g. "E" for Event.Input.UsePressed), so prompts and
  *  other UI can display the right key without hard-coding it.
  *  ACharacterBase implements this from its EventInputMappings table; any pawn
  *  forwarding ability input events can implement it to feed prompts its own

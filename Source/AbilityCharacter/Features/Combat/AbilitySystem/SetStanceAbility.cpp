@@ -3,6 +3,8 @@
 #include "SetStanceAbility.h"
 
 #include "AbilitySystemComponent.h"
+#include "Core/AbilitySystem/CombatAbilitySystemComponent.h"
+#include "Core/AbilitySystem/CombatGameplayTags.h"
 
 USetStanceAbility::USetStanceAbility()
 {
@@ -35,10 +37,29 @@ void USetStanceAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		}
 	}
 
-	// apply the new stance tags
-	for (const FGameplayTag& TagToAdd : StanceTagsToAdd)
+	// apply the new stance tags through the replicated State.Stance slot: one effect
+	// grants all of them and replaces whatever the previous stance granted. Effect-
+	// granted tags replicate to every client (loose tags never do), so animation
+	// blueprints can drive poses off State.Stance.* on machines that don't run the
+	// stance logic
+	if (UCombatAbilitySystemComponent* CombatASC = Cast<UCombatAbilitySystemComponent>(ASC))
 	{
-		ASC->AddLooseGameplayTag(TagToAdd);
+		if (StanceTagsToAdd.IsEmpty())
+		{
+			CombatASC->ClearGrantedTags(TAG_State_Stance);
+		}
+		else
+		{
+			CombatASC->ApplyGrantedTags(TAG_State_Stance, StanceTagsToAdd);
+		}
+	}
+	else
+	{
+		// fall back to loose tags for non-combat ability system components
+		for (const FGameplayTag& TagToAdd : StanceTagsToAdd)
+		{
+			ASC->AddLooseGameplayTag(TagToAdd);
+		}
 	}
 
 	// grant the abilities this stance provides (skip ones already granted so

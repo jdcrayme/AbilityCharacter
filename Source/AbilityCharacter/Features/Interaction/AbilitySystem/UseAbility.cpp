@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "UseAbility.h"
+#include "AbilityCharacter.h"
 
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "AbilitySystemComponent.h"
@@ -19,10 +20,6 @@
 
 UUseAbility::UUseAbility()
 {
-        // passive: granted with the default abilities and runs for the character's lifetime
-        InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-        bRetriggerInstancedAbility = false;
-
         // runs on the owning client as well so the trace and prompt follow the local camera
         NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 
@@ -30,20 +27,6 @@ UUseAbility::UUseAbility()
         // implementing the CombatUsePromptInterface in a Blueprint subclass to restyle it
         PromptWidgetClass = UCombatUsePromptWidget::StaticClass();
         UseKeyLabel = NSLOCTEXT("UseAbility", "DefaultUseKeyLabel", "E");
-}
-
-void UUseAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
-{
-        Super::OnGiveAbility(ActorInfo, Spec);
-
-        // start the ability as soon as it is granted; granting alone doesn't activate
-        if (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid() &&
-                ActorInfo->OwnerActor.IsValid() &&
-                ActorInfo->OwnerActor->GetLocalRole() == ROLE_Authority &&
-                !Spec.IsActive())
-        {
-                ActorInfo->AbilitySystemComponent->TryActivateAbility(Spec.Handle, false);
-        }
 }
 
 void UUseAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
@@ -214,7 +197,7 @@ void UUseAbility::RunUseCheck()
         {
                 if (CurrentUsable.GetObject())
                 {
-                        UE_LOG(LogTemp, Verbose, TEXT("[UseAbility] found usable target %s"), *GetNameSafe(CurrentUsable.GetObject()));
+                        UE_LOG(LogAbilityCharacter, Verbose, TEXT("[UseAbility] found usable target %s"), *GetNameSafe(CurrentUsable.GetObject()));
                 }
                 else
                 {
@@ -238,7 +221,7 @@ void UUseAbility::OnUsePressed(FGameplayEventData EventData)
         }
 
         // diagnostic checkpoint: proves the gameplay event reached this ability
-        UE_LOG(LogTemp, Log, TEXT("[UseAbility] use input received"));
+        UE_LOG(LogAbilityCharacter, Log, TEXT("[UseAbility] use input received"));
 
         // refresh the interaction ray so the target can't be used after stepping out of range
         RunUseCheck();
@@ -248,7 +231,7 @@ void UUseAbility::OnUsePressed(FGameplayEventData EventData)
         if (!Avatar || !UsableObject)
         {
                 // diagnostic checkpoint: the input chain works, but the ray has no usable target right now
-                UE_LOG(LogTemp, Warning, TEXT("[UseAbility] use input received, but no usable target is in range"));
+                UE_LOG(LogAbilityCharacter, Warning, TEXT("[UseAbility] use input received, but no usable target is in range"));
                 return;
         }
 
@@ -260,7 +243,7 @@ void UUseAbility::OnUsePressed(FGameplayEventData EventData)
                 return;
         }
 
-        UE_LOG(LogTemp, Warning, TEXT("[UseAbility] %s used %s"), *Avatar->GetName(), *GetNameSafe(UsableObject));
+        UE_LOG(LogAbilityCharacter, Warning, TEXT("[UseAbility] %s used %s"), *Avatar->GetName(), *GetNameSafe(UsableObject));
 
         // call the function on the action volume actor or component
         ICombatUsable::Execute_Use(UsableObject, Avatar);

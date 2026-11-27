@@ -28,10 +28,16 @@ Source/AbilityCharacter/
 │   ├── AbilitySystem/                       GAS plumbing
 │   │   ├── CharacterAttributeSet            Health/Stamina, State.Dead tag
 │   │   ├── CombatAbilitySystemComponent     allocates the combat effect
-│   │   │                                    context (hit result + knockback)
+│   │   │                                    context (hit result + knockback);
+│   │   │                                    replicated tag slots
+│   │   │                                    (ApplyGrantedTags/ClearGrantedTags)
+│   │   ├── CombatTagGrantEffect             infinite effect the tag slots
+│   │   │                                    grant their tags through
 │   │   ├── CombatEffectContext              FGameplayEffectContext subclass
-│   │   ├── CombatGameplayTags               native tags (Combat.*,
-│   │   │                                    Ability.Attack.*, State.Stance.*)
+│   │   ├── CombatGameplayTags               native tags (Event.*,
+│   │   │                                    Ability.*, State.*, Data.*)
+│   │   ├── PassiveAbilityBase               grant-means-activate base for
+│   │   │                                    passive abilities
 │   │   ├── AsyncTaskCooldownChanged         BP async node for cooldown UI
 │   │   │                                    (currently unused by content)
 │   │   └── HideByTagComponent               hides a component by gameplay tag
@@ -63,8 +69,9 @@ Source/AbilityCharacter/
 │   │   │   └── CombatStaminaCostEffect      shared SetByCaller stamina cost
 │   │   ├── AI/                              AI controller, enemy, spawner,
 │   │   │                                    StateTree tasks/conditions, EQS
-│   │   ├── Animation/                       attack trace + combo/charge
-│   │   │                                    check anim notifies
+│   │   ├── Animation/                       anim notifies: attack trace,
+│   │   │                                    combo/charge checks, and the
+│   │   │                                    generic SendGameplayEvent
 │   │   ├── Gameplay/                        arena/checkpoint volumes,
 │   │   │                                    dummy, damageable box, lava floor
 │   │   └── UI/CombatLifeBar
@@ -116,8 +123,9 @@ two generic tables configured on the character Blueprint:
 | Concern | Mechanism |
 | --- | --- |
 | Granting | `DefaultAbilities` - abilities granted at init (e.g. add `GA_Use` to get the interaction feature) |
-| Input | `EventInputMappings` - Input Action -> gameplay event tag table; abilities listen with `WaitGameplayEvent` |
+| Input | `EventInputMappings` - Input Action -> gameplay event tag table, each row with its own trigger event (Started / Completed / Triggered); abilities listen with `WaitGameplayEvent` |
 | Ability activation | `AbilityInputMappings` - Input Action -> ability tag (activated by tag, no class reference) |
+| State tags | `UCombatAbilitySystemComponent::ApplyGrantedTags` - one replicated tag slot per feature group (`State.Stance`), applied through `USetStanceAbility` |
 | Stances | `USetStanceAbility` grants/revokes feature abilities while a stance is active (combat stance arms the attacks) |
 
 Adding a feature to a character = add rows to these tables; removing it
@@ -156,28 +164,46 @@ rewrite.
 5. Repeat for each feature module; feature modules depend on Core only.
 6. The game module keeps `Template/`, maps and project-specific glue.
 
-`CombatGameplayTags` (`Combat.*`, `Ability.Attack.*`, `State.Stance.*`) moves
+`CombatGameplayTags` (`Event.*`, `Ability.*`, `State.*`, `Data.*`) moves
 with Core; native gameplay tags are registered globally by module, so tags
 keep working when their defining module moves.
 
 ## Next feature: the rifle (ranged combat)
 
-`URangedAbility` (Features/Combat/AbilitySystem) is already a working hitscan
-base: on activation it traces from the player view (or the `muzzle` socket on
-the avatar mesh), applies the shared damage effect and executes the damage
-cue, reusing `UCombatAbilityBase`'s montage/effect/cue chain. The rifle
-feature therefore needs **no new base class**:
+`URangedAbility` (Features/Combat/AbilitySystem) is a working hitscan base
+built on `UCombatAbilityBase`'s montage -> trace event -> effect -> cue chain:
+it commits, plays its montage, and fires the hitscan on the montage's attack
+trace notify (with an end-of-montage fallback), tracing from the player view
+or the `muzzle` socket. The rifle feature therefore needs **no new base class**
+- and the assets are already in the project:
 
-1. Assets first (your current blocker): a rifle mesh (socket named `muzzle`),
-   idle/aim-fire animation montages, optionally an aim-offset. Typical
-   sources: Fab/marketplace weapon packs, or a Mixamo/UE5 mannequin retarget
-   for animations. *(Suggestions only - pick what fits your art direction.)*
-2. `URifleAbility : URangedAbility` (or a Blueprint subclass): montage,
+- meshes: `Content/Weapons/Rifle` / `Pistol` / `GrenadeLauncher` (skeletal,
+  static and physics variants, materials, fire sound, projectile mesh)
+- animation: `Content/Characters/Mannequins/Anims/Rifle|Pistol` ships the full
+  weapon sets - equip/fire/reload/dry-fire montages, ADS idles, the
+  `AO_Rifle`/`AO_Pistol` aim offsets, jog/walk/jump locomotion and hit reacts
+- sockets: `Muzzle` on the weapon skeletons (plus Grip/Magazine/Trigger),
+  `hand_r` on the character mesh for attachment
+
+Remaining steps:
+
+1. `URifleAbility : URangedAbility` (or a Blueprint subclass): montage,
    damage tuning, `MuzzleSocketName`, ammo handling. Trigger it from a new
-   `Combat.Input.FirePressed` event tag + an `EventInputMappings` row.
-3. Optional later: an ammo attribute in `UCharacterAttributeSet` and a
+   `Event.Input.FirePressed` event tag + an `EventInputMappings` row.
+2. A reload ability: montage with a `UAnimNotify_SendGameplayEvent`
+   (`Event.Weapon.MagIn`) at the frame the magazine seats, which drives the
+   ammo transfer - the same anim-notify-drives-gameplay discipline the melee
+   traces use. Interruptions before the notify cancel the reload for free.
+3. An aim ability: model it on `UChargedAttackAbility`'s press/release pattern
+   (two `EventInputMappings` rows on the same input action: Started sends
+   `Event.Input.AimPressed`, Completed sends `Event.Input.AimReleased`),
+   granting a replicated `State.Aiming` tag through a tag slot while held.
+4. Optional later: an ammo attribute in `UCharacterAttributeSet` and a
    SetByCaller cost effect (mirror `UCombatStaminaCostEffect`), plus a fire
    loop / automatic fire mode.
+
+See CLEANUP_PASS_2.md for the open multiplayer item (replicating
+input-derived gameplay events) before wiring prediction-heavy weapon input.
 
 ## Editor housekeeping (once)
 

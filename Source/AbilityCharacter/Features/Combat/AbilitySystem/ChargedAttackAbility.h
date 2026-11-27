@@ -11,7 +11,7 @@ struct FGameplayEventData;
 
 /**
  *  A melee attack that charges while the input is held.
- *  The montage's AnimNotify_CheckChargedAttack fires the Combat.CheckChargedAttack
+ *  The montage's AnimNotify_CheckChargedAttack fires the Event.CheckChargedAttack
  *  event; the ability jumps between the charge loop and attack sections based on
  *  whether the input is still held (players) or on a randomized loop count (AI,
  *  see UAIChargedAttackAbility).

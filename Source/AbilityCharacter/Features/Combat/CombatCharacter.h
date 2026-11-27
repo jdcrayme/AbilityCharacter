@@ -14,8 +14,6 @@ struct FInputActionValue;
 class UCombatLifeBar;
 class UWidgetComponent;
 
-DECLARE_LOG_CATEGORY_EXTERN(LogCombatCharacter, Log, All);
-
 /**
  *  An enhanced Third Person Character with melee combat capabilities.
  *  All attacks are GameplayAbilities; input is forwarded to the ability system

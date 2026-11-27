@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "CombatActionVolumeComponent.h"
+#include "AbilityCharacter.h"
 #include "Core/Interfaces/CombatActivatable.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/Actor.h"
@@ -54,7 +55,7 @@ void UCombatActionVolumeComponent::CreateTraceBox()
         USceneComponent* OwnerRoot = Owner->GetRootComponent();
         if (!OwnerRoot)
         {
-                UE_LOG(LogTemp, Warning, TEXT("[ActionVolume] %s has no root component; the trace box for its action volume could not be attached"), *Owner->GetName());
+                UE_LOG(LogAbilityCharacter, Warning, TEXT("[ActionVolume] %s has no root component; the trace box for its action volume could not be attached"), *Owner->GetName());
                 return;
         }
 
@@ -98,7 +99,7 @@ void UCombatActionVolumeComponent::Use_Implementation(AActor* User)
                 bUsed = true;
         }
 
-        UE_LOG(LogTemp, Warning, TEXT("[ActionVolume] %s's action volume was used by %s"), *GetNameSafe(GetOwner()), User ? *User->GetName() : TEXT("nobody"));
+        UE_LOG(LogAbilityCharacter, Warning, TEXT("[ActionVolume] %s's action volume was used by %s"), *GetNameSafe(GetOwner()), User ? *User->GetName() : TEXT("nobody"));
 
         // notify listeners (Blueprints, StateTree, UI...)
         OnUsed.Broadcast(User);

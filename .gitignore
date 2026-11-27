@@ -12,3 +12,6 @@ Saved
 *.suo
 *.xcodeproj
 *.xcworkspace
+# IDE state and generated solutions (regenerated locally)
+.idea
+*.slnx

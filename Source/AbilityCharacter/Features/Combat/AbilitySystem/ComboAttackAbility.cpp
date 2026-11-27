@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "ComboAttackAbility.h"
+#include "AbilityCharacter.h"
 
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Core/AbilitySystem/CombatGameplayTags.h"
@@ -38,7 +39,7 @@ UComboAttackAbility::UComboAttackAbility()
 	AttackDamage = 26.0f;
 	KnockbackImpulse = 250.0f;
 	LaunchImpulse = 300.0f;
-	MeleeTraceRadius = 75.0f;
+	TraceRadius = 75.0f;
 
 	ComboSectionNames = { TEXT("Melee01"), TEXT("Melee02"), TEXT("Melee03") };
 }
@@ -82,13 +83,13 @@ void UComboAttackAbility::OnComboCheckEvent(FGameplayEventData EventData)
 
 	if (NextSection >= ComboSectionNames.Num())
 	{
-		UE_LOG(LogTemp, Verbose, TEXT("[Combo] %s: combo string finished at section %d"), *GetName(), ComboCount);
+		UE_LOG(LogAbilityCharacter, Verbose, TEXT("[Combo] %s: combo string finished at section %d"), *GetName(), ComboCount);
 		return;
 	}
 
 	if (!WantsNextComboSection())
 	{
-		UE_LOG(LogTemp, Verbose, TEXT("[Combo] %s: no buffered input, stopping at section %d"), *GetName(), ComboCount);
+		UE_LOG(LogAbilityCharacter, Verbose, TEXT("[Combo] %s: no buffered input, stopping at section %d"), *GetName(), ComboCount);
 		return;
 	}
 
@@ -96,7 +97,7 @@ void UComboAttackAbility::OnComboCheckEvent(FGameplayEventData EventData)
 	LastAttackInputTime = -1000.0f;
 	ComboCount = NextSection;
 
-	UE_LOG(LogTemp, Verbose, TEXT("[Combo] %s: chaining to section %s"), *GetName(), *ComboSectionNames[ComboCount].ToString());
+	UE_LOG(LogAbilityCharacter, Verbose, TEXT("[Combo] %s: chaining to section %s"), *GetName(), *ComboSectionNames[ComboCount].ToString());
 	MontageJumpToSection(ComboSectionNames[ComboCount]);
 }
 

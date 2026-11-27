@@ -10,7 +10,10 @@
  *  Base ability for character stances (Combat, Walk, Run, Sneak, Crouch, Prone...).
  *  A stance is expressed through gameplay tags on the owner's ability system
  *  component (State.Stance.*) plus an optional granted gameplay effect for
- *  attribute-driven changes such as movement speed.
+ *  attribute-driven changes such as movement speed. The tags are applied
+ *  through the replicated State.Stance tag slot (UCombatAbilitySystemComponent::
+ *  ApplyGrantedTags), so they are visible on every client and are swapped out
+ *  automatically when another stance re-applies the slot.
  *
  *  Stances can also grant a set of abilities while they are active (for example
  *  the combat stance grants the primary and secondary attacks) and revoke a set

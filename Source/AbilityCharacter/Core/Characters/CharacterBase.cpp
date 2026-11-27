@@ -2,6 +2,7 @@
 
 
 #include "CharacterBase.h"
+#include "AbilityCharacter.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/DamageEvents.h"
@@ -81,9 +82,12 @@ void ACharacterBase::SetupPlayerInputComponent(class UInputComponent* PlayerInpu
                 {
                         if (Mapping.InputAction && Mapping.EventTag.IsValid())
                         {
+                                // each row picks its own trigger event: Started for presses,
+                                // Completed for releases (hold-style abilities use a
+                                // press row and a release row for the same input action)
                                 EnhancedInputComponent->BindAction(
                                         Mapping.InputAction,
-                                        ETriggerEvent::Started,
+                                        Mapping.TriggerEvent,
                                         this,
                                         &ThisClass::SendAbilityInputEvent,
                                         Mapping.EventTag // This is the payload
@@ -230,7 +234,7 @@ void ACharacterBase::SendAbilityInputEvent(FGameplayTag EventTag)
 
         // diagnostic checkpoint: proves Enhanced Input fired the mapping and the
         // character forwarded the event into the ability system
-        UE_LOG(LogTemp, Log, TEXT("[AbilityInput] %s forwarded gameplay event %s"), *GetName(), *EventTag.ToString());
+        UE_LOG(LogAbilityCharacter, Log, TEXT("[AbilityInput] %s forwarded gameplay event %s"), *GetName(), *EventTag.ToString());
 
         UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventTag, FGameplayEventData());
 }

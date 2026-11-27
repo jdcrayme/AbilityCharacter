@@ -11,9 +11,9 @@ struct FGameplayEventData;
 
 /**
  *  A melee attack that plays a combo string.
- *  The montage's AnimNotify_CheckCombo fires the Combat.CheckCombo event; the
+ *  The montage's AnimNotify_CheckCombo fires the Event.CheckCombo event; the
  *  ability then decides whether to jump to the next combo section.
- *  Player characters buffer attack input through Combat.Input.AttackPressed
+ *  Player characters buffer attack input through Event.Input.AttackPressed
  *  events, AI characters decide the combo length up front (see UAIComboAttackAbility).
  */
 UCLASS()

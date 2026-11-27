@@ -2,6 +2,7 @@
 
 
 #include "CombatEnemy.h"
+#include "AbilityCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Features/Combat/AI/CombatAIController.h"
@@ -70,7 +71,7 @@ bool ACombatEnemy::TryAIAttack(const FGameplayTag& AbilityTag)
 
 	// run the attack through the ability system
 	const bool bActivated = AbilitySystemComponent && AbilitySystemComponent->TryActivateAbilitiesByTag(FGameplayTagContainer(AbilityTag));
-	UE_LOG(LogTemp, Verbose, TEXT("[Combat] %s AI attack (%s): TryActivate=%d"), *GetName(), *AbilityTag.ToString(), bActivated);
+	UE_LOG(LogAbilityCharacter, Verbose, TEXT("[Combat] %s AI attack (%s): TryActivate=%d"), *GetName(), *AbilityTag.ToString(), bActivated);
 	bIsAttacking = bActivated;
 
 	if (!bIsAttacking)

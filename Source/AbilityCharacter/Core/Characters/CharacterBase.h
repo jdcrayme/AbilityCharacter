@@ -10,6 +10,8 @@
 #include "Animation/AnimMontage.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
+#include "InputActionValue.h"
+#include "InputTriggers.h"
 #include "Engine/TimerHandle.h"
 #include "Core/AbilitySystem/CharacterAttributeSet.h"
 #include "Core/AbilitySystem/CombatAbilitySystemComponent.h"
@@ -44,6 +46,10 @@ struct ABILITYCHARACTER_API FInputActionEventMapping
         /** Gameplay event tag sent when the input action fires; abilities listen for it with WaitGameplayEvent */
         UPROPERTY(EditAnywhere, BlueprintReadOnly)
         FGameplayTag EventTag;
+
+        /** When the input action fires: Started for presses, Completed for releases, Triggered for every tick while held. Hold-style abilities (aim, charged attacks) listen for the press AND release events of the same action through two rows. */
+        UPROPERTY(EditAnywhere, BlueprintReadOnly)
+        ETriggerEvent TriggerEvent = ETriggerEvent::Started;
 
         /** Key label bound to this event, displayed by prompts and UI (e.g. "E"); keep it in sync with the mapping context. Empty lets the caller fall back to its own default. */
         UPROPERTY(EditAnywhere, BlueprintReadOnly)

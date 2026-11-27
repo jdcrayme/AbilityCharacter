@@ -1,33 +1,13 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "StanceMonitorAbility.h"
+#include "AbilityCharacter.h"
 
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "AbilitySystemComponent.h"
 #include "Core/AbilitySystem/CombatGameplayTags.h"
 #include "Engine/OverlapResult.h"
 #include "TimerManager.h"
-
-UStanceMonitorAbility::UStanceMonitorAbility()
-{
-	// passive: granted at init and runs for the character's lifetime
-	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-	bRetriggerInstancedAbility = false;
-}
-
-void UStanceMonitorAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
-{
-	Super::OnGiveAbility(ActorInfo, Spec);
-
-	// start the monitor as soon as it is granted; granting alone doesn't activate
-	if (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid() &&
-		ActorInfo->OwnerActor.IsValid() &&
-		ActorInfo->OwnerActor->GetLocalRole() == ROLE_Authority &&
-		!Spec.IsActive())
-	{
-		ActorInfo->AbilitySystemComponent->TryActivateAbility(Spec.Handle, false);
-	}
-}
 
 void UStanceMonitorAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
@@ -66,14 +46,14 @@ void UStanceMonitorAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, 
 
 void UStanceMonitorAbility::OnSweepTimer()
 {
-	UE_LOG(LogTemp, Verbose, TEXT("[StanceMonitor] sweep tick"));
+	UE_LOG(LogAbilityCharacter, Verbose, TEXT("[StanceMonitor] sweep tick"));
 	RunStanceCheck();
 }
 
 void UStanceMonitorAbility::OnArenaEntered(FGameplayEventData EventData)
 {
 	// walking into an arena immediately puts us on guard
-	UE_LOG(LogTemp, Warning, TEXT("[StanceMonitor] arena entered -> combat stance"));
+	UE_LOG(LogAbilityCharacter, Warning, TEXT("[StanceMonitor] arena entered -> combat stance"));
 	LastEnemySeenTime = GetWorld()->GetTimeSeconds();
 	EnterCombatStance();
 }
@@ -127,7 +107,7 @@ void UStanceMonitorAbility::RunStanceCheck()
 	// no enemies for a while: stand down
 	if (bInCombatStance && (Now - LastEnemySeenTime) >= CombatExitDelay)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[StanceMonitor] no enemies for %.1fs -> neutral stance"), Now - LastEnemySeenTime);
+		UE_LOG(LogAbilityCharacter, Warning, TEXT("[StanceMonitor] no enemies for %.1fs -> neutral stance"), Now - LastEnemySeenTime);
 		EnterNeutralStance();
 	}
 }

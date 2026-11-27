@@ -8,7 +8,7 @@
 
 /**
  *  Base class for melee attack abilities.
- *  Hit detection is driven by Combat.AttackTrace gameplay events fired from the
+ *  Hit detection is driven by Event.AttackTrace gameplay events fired from the
  *  montage's AnimNotify_DoAttackTrace, so weapons and attacks can place traces
  *  exactly where their animation strikes.
  */
@@ -16,4 +16,8 @@ UCLASS()
 class ABILITYCHARACTER_API UMeleeAbility : public UCombatAbilityBase
 {
 	GENERATED_BODY()
+
+public:
+
+	UMeleeAbility();
 };

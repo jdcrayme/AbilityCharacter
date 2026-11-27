@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "CombatAbilityBase.h"
+#include "AbilityCharacter.h"
 
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
@@ -53,7 +54,7 @@ void UCombatAbilityBase::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 	}
 
 	AActor* Avatar = GetAvatarActorFromActorInfo();
-	UE_LOG(LogTemp, Warning, TEXT("[Combat] %s activating on %s (montage=%s, effect=%s)"),
+	UE_LOG(LogAbilityCharacter, Warning, TEXT("[Combat] %s activating on %s (montage=%s, effect=%s)"),
 		*GetName(), *GetNameSafe(Avatar),
 		MontageToPlay ? *MontageToPlay->GetName() : TEXT("NONE"),
 		EffectToApply ? *EffectToApply->GetName() : TEXT("NONE"));
@@ -140,6 +141,10 @@ void UCombatAbilityBase::PerformHitCheck(const FGameplayEventData& EventData)
 	AActor* Avatar = GetAvatarActorFromActorInfo();
 	if (!Avatar || !EffectToApply) return;
 
+	// damage is applied by the server's ability instance: predicted client
+	// instances run the montage for responsiveness but leave the sweep alone
+	if (!Avatar->HasAuthority()) return;
+
 	// the trace notify tells us which bone the hit came from
 	FName DamageSourceBone = NAME_None;
 	if (const UAnimNotify_DoAttackTrace* TraceNotify = Cast<UAnimNotify_DoAttackTrace>(EventData.OptionalObject))
@@ -162,7 +167,7 @@ void UCombatAbilityBase::PerformHitCheck(const FGameplayEventData& EventData)
 	}
 
 	FCollisionShape CollisionShape;
-	CollisionShape.SetSphere(MeleeTraceRadius);
+	CollisionShape.SetSphere(TraceRadius);
 
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(Avatar);
@@ -184,6 +189,10 @@ void UCombatAbilityBase::ApplyDamageToTarget(const FHitResult& HitResult)
 	AActor* TargetActor = HitResult.GetActor();
 
 	if (!Avatar || !MyASC || !TargetActor || !EffectToApply) return;
+
+	// effects and cues are applied by the server's instance; a predicted client
+	// instance would only produce spec warnings that the server discards
+	if (!Avatar->HasAuthority()) return;
 
 	UAbilitySystemComponent* TargetASC = TargetActor->FindComponentByClass<UAbilitySystemComponent>();
 	if (!TargetASC) return;

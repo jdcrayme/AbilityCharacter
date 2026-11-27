@@ -17,7 +17,7 @@ struct FGameplayEventData;
  *  Runs the full ability -> effect -> cue chain:
  *  1. Plays its montage through an ability task.
  *  2. Warns nearby damageable actors of the incoming attack.
- *  3. Listens for Combat.AttackTrace gameplay events sent by the montage's
+ *  3. Listens for Event.AttackTrace gameplay events sent by the montage's
  *     AnimNotify_DoAttackTrace to run the hit sweep.
  *  4. Applies the damage effect attacker-side with hit result and knockback in
  *     the effect context, then executes the GameplayCue.Damage cue on the
@@ -58,9 +58,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability|Targeting", meta = (ClampMin = 0, ClampMax = 500, Units = "cm"))
 	float MeleeTraceDistance = 75.0f;
 
-	/** Radius of the sphere sweep for melee attacks */
+	/** Radius of the sphere sweep for melee attacks, and of the sphere used by hitscan traces */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability|Targeting", meta = (ClampMin = 0, ClampMax = 200, Units = "cm"))
-	float MeleeTraceRadius = 50.0f;
+	float TraceRadius = 50.0f;
 
 	/** Distance ahead of the avatar that damageable actors will be warned of the incoming attack */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability|Targeting", meta = (ClampMin = 0, ClampMax = 500, Units = "cm"))
@@ -87,15 +87,15 @@ protected:
 	/** Warns nearby damageable actors that an attack is coming so they can react */
 	void NotifyEnemiesOfIncomingAttack();
 
-	/** Runs the hit sweep described by the attack trace event and damages each target */
-	void PerformHitCheck(const FGameplayEventData& EventData);
+	/** Runs the hit sweep described by the attack trace event and damages each target. Ranged abilities override this to hitscan instead of sweeping */
+	virtual void PerformHitCheck(const FGameplayEventData& EventData);
 
 	/** Applies the damage effect and damage cue to a single target */
 	void ApplyDamageToTarget(const FHitResult& HitResult);
 
 	/** Called when the montage finishes, is interrupted or cancelled */
 	UFUNCTION()
-	void OnMontageFinished();
+	virtual void OnMontageFinished();
 
 	/** Called when a montage AnimNotify fires the attack trace event */
 	UFUNCTION()

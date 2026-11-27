@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "ChargedAttackAbility.h"
+#include "AbilityCharacter.h"
 
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Core/AbilitySystem/CombatGameplayTags.h"
@@ -37,7 +38,7 @@ UChargedAttackAbility::UChargedAttackAbility()
 	AttackDamage = 26.0f;
 	KnockbackImpulse = 250.0f;
 	LaunchImpulse = 300.0f;
-	MeleeTraceRadius = 75.0f;
+	TraceRadius = 75.0f;
 
 	// a charged release is a heavier commitment than a combo hit
 	StaminaCost = 25.0f;
@@ -74,7 +75,7 @@ void UChargedAttackAbility::OnChargeCheckEvent(FGameplayEventData EventData)
 	bHasLoopedCharge = true;
 
 	const bool bRelease = ShouldReleaseCharge();
-	UE_LOG(LogTemp, Verbose, TEXT("[Charged] %s: charge check, release=%d"), *GetName(), bRelease);
+	UE_LOG(LogAbilityCharacter, Verbose, TEXT("[Charged] %s: charge check, release=%d"), *GetName(), bRelease);
 	MontageJumpToSection(bRelease ? ChargeAttackSection : ChargeLoopSection);
 }
 

@@ -8,7 +8,7 @@ UAIComboAttackAbility::UAIComboAttackAbility()
 	AttackDamage = 1.0f;
 	KnockbackImpulse = 150.0f;
 	LaunchImpulse = 350.0f;
-	MeleeTraceRadius = 50.0f;
+	TraceRadius = 50.0f;
 
 	// AI attacks only hit pawns, they don't damage destructibles
 	bDamageWorldObjects = false;

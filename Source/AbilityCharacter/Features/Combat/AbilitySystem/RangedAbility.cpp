@@ -8,17 +8,56 @@ URangedAbility::URangedAbility()
 {
 	// ranged attacks trace from the weapon muzzle by default
 	MuzzleSocketName = TEXT("muzzle");
-	MeleeTraceDistance = 0.0f;
+
+	// players want their shots predicted: the montage plays locally, the server
+	// owns the damage (CombatAbilityBase gates the damage paths on authority)
+	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 }
 
 void URangedAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	// one shot per activation; the trace notify (or the montage ending) sets it
+	bHasFired = false;
 
+	// commit, play the montage and listen for the trace notify
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+}
+
+void URangedAbility::OnAttackTraceEvent(FGameplayEventData EventData)
+{
+	// the notify is the fire frame; ignore any additional notifies in the montage
+	if (bHasFired)
+	{
+		return;
+	}
+
+	bHasFired = true;
+	PerformRangedTrace();
+}
+
+void URangedAbility::OnMontageFinished()
+{
+	// montages without a trace notify still fire once, at the end instead of the
+	// exact fire frame
+	if (!bHasFired && MontageToPlay)
+	{
+		bHasFired = true;
+		PerformRangedTrace();
+	}
+
+	Super::OnMontageFinished();
+}
+
+void URangedAbility::PerformRangedTrace()
+{
 	AActor* Avatar = GetAvatarActorFromActorInfo();
 	if (!Avatar) return;
 
-	// trace from the avatar's view if possible, otherwise straight from the avatar
+	// the server's instance applies the damage; predicted client instances only
+	// played the montage for responsiveness
+	if (!Avatar->HasAuthority()) return;
+
+	// trace from the avatar's view if possible, otherwise from the muzzle socket
 	FVector TraceStart = Avatar->GetActorLocation();
 	FVector TraceDirection = Avatar->GetActorForwardVector();
 
@@ -50,7 +89,7 @@ void URangedAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle, co
 	QueryParams.AddIgnoredActor(Avatar);
 
 	FHitResult HitResult;
-	if (GetWorld()->SweepSingleByObjectType(HitResult, TraceStart, TraceEnd, FQuat::Identity, ObjectParams, FCollisionShape::MakeSphere(MeleeTraceRadius), QueryParams))
+	if (GetWorld()->SweepSingleByObjectType(HitResult, TraceStart, TraceEnd, FQuat::Identity, ObjectParams, FCollisionShape::MakeSphere(TraceRadius), QueryParams))
 	{
 		ApplyDamageToTarget(HitResult);
 	}

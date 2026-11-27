@@ -8,7 +8,7 @@ UAIChargedAttackAbility::UAIChargedAttackAbility()
 	AttackDamage = 1.0f;
 	KnockbackImpulse = 150.0f;
 	LaunchImpulse = 350.0f;
-	MeleeTraceRadius = 50.0f;
+	TraceRadius = 50.0f;
 	bDamageWorldObjects = false;
 }
 

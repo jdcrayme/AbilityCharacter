@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/EngineTypes.h"
 #include "Engine/TimerHandle.h"
-#include "Abilities/GameplayAbility.h"
+#include "Core/AbilitySystem/PassiveAbilityBase.h"
 #include "Features/Interaction/Interfaces/CombatUsable.h"
 #include "Components/WidgetComponent.h"
 #include "UseAbility.generated.h"
@@ -20,7 +20,7 @@ class ACombatUsePromptActor;
  *  actors implementing the CombatUsable interface, or actors hosting a
  *  component that implements it (e.g. UCombatActionVolumeComponent on a
  *  vehicle) - and shows a world-space use prompt widget along the ray while
- *  one is in range. Pressing the use input (the Combat.Input.UsePressed
+ *  one is in range. Pressing the use input (the Event.Input.UsePressed
  *  gameplay event, forwarded by the character like any other input) calls the
  *  target's Use function.
  *  Intended to be subclassed as a Blueprint ability and added to a character's
@@ -31,7 +31,7 @@ class ACombatUsePromptActor;
  *  instances stay idle.
  */
 UCLASS()
-class ABILITYCHARACTER_API UUseAbility : public UGameplayAbility
+class ABILITYCHARACTER_API UUseAbility : public UPassiveAbilityBase
 {
 	GENERATED_BODY()
 
@@ -88,9 +88,6 @@ protected:
 
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
-
-	/** Passive ability: start running as soon as it is granted */
-	virtual void OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
 
 	/** Line traces ahead of the character for a usable target and updates the prompt */
 	void RunUseCheck();

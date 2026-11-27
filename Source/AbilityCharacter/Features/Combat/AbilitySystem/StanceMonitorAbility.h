@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Abilities/GameplayAbility.h"
+#include "Core/AbilitySystem/PassiveAbilityBase.h"
 #include "StanceMonitorAbility.generated.h"
 
 /**
@@ -19,13 +19,11 @@
  *  sending more context events and extending the monitor.
  */
 UCLASS()
-class ABILITYCHARACTER_API UStanceMonitorAbility : public UGameplayAbility
+class ABILITYCHARACTER_API UStanceMonitorAbility : public UPassiveAbilityBase
 {
 	GENERATED_BODY()
 
 public:
-
-	UStanceMonitorAbility();
 
 	/** Radius in which nearby enemies put the character into the combat stance */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability|Stance Monitor", meta = (ClampMin = 0, Units = "cm"))
@@ -47,9 +45,6 @@ protected:
 
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
-
-	/** Passive ability: start running as soon as it is granted */
-	virtual void OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
 
 	/** Sweeps for nearby enemies and activates the matching stance */
 	void RunStanceCheck();
