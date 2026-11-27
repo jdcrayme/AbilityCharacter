@@ -7,6 +7,7 @@
 #include "AbilitySystem/CharacterAttributeSet.h"
 #include "Blueprint/UserWidget.h"
 #include "CombatGameplayTags.h"
+#include "CombatInputLabelProvider.h"
 #include "CombatUsePromptActor.h"
 #include "CombatUsePromptInterface.h"
 #include "CombatUsePromptWidget.h"
@@ -236,6 +237,9 @@ void UUseAbility::OnUsePressed(FGameplayEventData EventData)
                 return;
         }
 
+        // diagnostic checkpoint: proves the gameplay event reached this ability
+        UE_LOG(LogTemp, Log, TEXT("[UseAbility] use input received"));
+
         // refresh the interaction ray so the target can't be used after stepping out of range
         RunUseCheck();
 
@@ -243,6 +247,8 @@ void UUseAbility::OnUsePressed(FGameplayEventData EventData)
         UObject* UsableObject = CurrentUsable.GetObject();
         if (!Avatar || !UsableObject)
         {
+                // diagnostic checkpoint: the input chain works, but the ray has no usable target right now
+                UE_LOG(LogTemp, Warning, TEXT("[UseAbility] use input received, but no usable target is in range"));
                 return;
         }
 
@@ -308,6 +314,23 @@ void UUseAbility::UpdatePrompt(const FVector& ViewLocation, const FVector& HitLo
         const FVector PromptLocation = ViewLocation + (HitLocation - ViewLocation) * PromptDistanceRatio;
         PromptActor->SetPromptTarget(PromptLocation, ViewLocation, bSnapToTarget || !bPromptVisible);
 
+        // the key label comes from the avatar's input configuration when it
+        // provides one (CharacterBase reads it from its EventInputMappings);
+        // avatars without the CombatInputLabelProvider interface fall back to
+        // the ability's own UseKeyLabel
+        FText KeyText = UseKeyLabel;
+        if (AActor* AvatarActor = GetAvatarActorFromActorInfo())
+        {
+                if (AvatarActor->Implements<UCombatInputLabelProvider>())
+                {
+                        const FText AvatarKeyLabel = ICombatInputLabelProvider::Execute_GetKeyLabelForEvent(AvatarActor, TAG_Event_InputUsePressed);
+                        if (!AvatarKeyLabel.IsEmpty())
+                        {
+                                KeyText = AvatarKeyLabel;
+                        }
+                }
+        }
+
         // push the key label and the target's action text through the prompt interface;
         // any widget implementing CombatUsePromptInterface can receive them
         if (UUserWidget* PromptWidget = PromptActor->GetPromptWidget())
@@ -316,7 +339,7 @@ void UUseAbility::UpdatePrompt(const FVector& ViewLocation, const FVector& HitLo
                 {
                         ICombatUsePromptInterface::Execute_UpdatePromptText(
                                 PromptWidget,
-                                UseKeyLabel,
+                                KeyText,
                                 ICombatUsable::Execute_GetUseText(CurrentUsable.GetObject(), GetAvatarActorFromActorInfo()));
                 }
         }

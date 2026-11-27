@@ -233,7 +233,24 @@ void ACharacterBase::SendAbilityInputEvent(FGameplayTag EventTag)
 {
         if (!EventTag.IsValid()) return;
 
+        // diagnostic checkpoint: proves Enhanced Input fired the mapping and the
+        // character forwarded the event into the ability system
+        UE_LOG(LogTemp, Log, TEXT("[AbilityInput] %s forwarded gameplay event %s"), *GetName(), *EventTag.ToString());
+
         UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventTag, FGameplayEventData());
+}
+
+FText ACharacterBase::GetKeyLabelForEvent_Implementation(FGameplayTag EventTag)
+{
+        for (const FInputActionEventMapping& Mapping : EventInputMappings)
+        {
+                if (Mapping.EventTag == EventTag)
+                {
+                        return Mapping.KeyLabel;
+                }
+        }
+
+        return FText::GetEmpty();
 }
 
 void ACharacterBase::GrantAbility(TSubclassOf<UGameplayAbility> AbilityClass, int32 AbilityLevel)

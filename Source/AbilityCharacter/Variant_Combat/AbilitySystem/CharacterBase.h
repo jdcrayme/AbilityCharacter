@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "CombatDamageable.h"
+#include "CombatInputLabelProvider.h"
 #include "GameplayCueInterface.h"
 #include "Animation/AnimMontage.h"
 #include "AbilitySystemInterface.h"
@@ -43,6 +44,10 @@ struct ABILITYCHARACTER_API FInputActionEventMapping
         /** Gameplay event tag sent when the input action fires; abilities listen for it with WaitGameplayEvent */
         UPROPERTY(EditAnywhere, BlueprintReadOnly)
         FGameplayTag EventTag;
+
+        /** Key label bound to this event, displayed by prompts and UI (e.g. "E"); keep it in sync with the mapping context. Empty lets the caller fall back to its own default. */
+        UPROPERTY(EditAnywhere, BlueprintReadOnly)
+        FText KeyLabel;
 };
 
 // Event dispatcher exposed to Blueprints and C++
@@ -57,7 +62,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAttackAbilityEnded);
  *  GameplayEffects and reactions run through the GameplayCue.Damage cue.
  */
 UCLASS(abstract)
-class ABILITYCHARACTER_API ACharacterBase : public ACharacter, public IAbilitySystemInterface, public ICombatDamageable, public IGameplayCueInterface
+class ABILITYCHARACTER_API ACharacterBase : public ACharacter, public IAbilitySystemInterface, public ICombatDamageable, public ICombatInputLabelProvider, public IGameplayCueInterface
 {
         GENERATED_BODY()
 
@@ -146,6 +151,13 @@ public:
         /** Forwards an input-driven gameplay event to this character's ability system component, activating or informing running abilities */
         UFUNCTION(BlueprintCallable, Category = "Abilities")
         void SendAbilityInputEvent(FGameplayTag EventTag);
+
+        // ~begin CombatInputLabelProvider interface
+
+        /** Returns the key label configured for an event tag in EventInputMappings, or empty text when the tag has no entry or no label set */
+        virtual FText GetKeyLabelForEvent_Implementation(FGameplayTag EventTag) override;
+
+        // ~end CombatInputLabelProvider interface
 
         // ~begin CombatDamageable interface
 

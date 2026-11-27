@@ -28,6 +28,7 @@ Adding the use ability to a character (or a future grapple/inspect/vehicle abili
 | --- | --- |
 | `Variant_Combat/AbilitySystem/UseAbility.h/.cpp` | The passive ability: periodic trace, target resolution, world-space prompt, key handling |
 | `Variant_Combat/Interfaces/CombatUsable.h/.cpp` | Blueprintable interface for usable actors and components (`CanUse`, `GetUseText`, `Use`) |
+| `Variant_Combat/Interfaces/CombatInputLabelProvider.h/.cpp` | Interface for pawns that can name the key bound to an input event tag (`GetKeyLabelForEvent`); `CharacterBase` answers from its `EventInputMappings`, so prompts always show the character's configured key |
 | `Variant_Combat/Gameplay/CombatActionVolumeComponent.h/.cpp` | **Actor component** that makes any actor usable: UseText, `OnUsed` event, linked `CombatActivatable` actors, optional auto-created trace box |
 | `Variant_Combat/Gameplay/CombatActionVolume.h/.cpp` | Standalone, level-placeable action volume (a box + the component above) |
 | `Variant_Combat/UI/CombatUsePromptActor.h/.cpp` | World-space prompt holder: a `WidgetComponent` actor the ability spawns, moves and hides; smoothly follows its target between traces |
@@ -41,10 +42,11 @@ Adding the use ability to a character (or a future grapple/inspect/vehicle abili
    - `Prompt Widget Class` — defaults to the built-in `CombatUsePromptWidget`; assign any widget implementing `CombatUsePromptInterface`.
    - `Trace Distance` / `Trace Interval` / `Trace Channel` — the interaction ray (targets must **block** the trace channel; Visibility by default).
    - `Prompt Space` / `Prompt Draw Size` / `Prompt Distance Ratio` (0.5 = midway between ray source and hit point) / `Prompt Smoothing Speed`.
-   - `Use Key Label` — the text in the prompt; keep it in sync with your key binding.
+   - `Use Key Label` — the prompt's fallback key text, used when the character provides no key label of its own (see the next step).
 3. **Character**: open the character Blueprint (e.g. `BP_CombatCharacter`) and:
    - add `GA_Use` to **Default Abilities**;
-   - under **Ability System | Input → Event Input Mappings**, add `IA_Use` → `Combat.Input.UsePressed`.
+   - under **Ability System | Input → Event Input Mappings**, add `IA_Use` → `Combat.Input.UsePressed`;
+   - set the entry's **Key Label** (e.g. "E") — the prompt asks the character for the key bound to each event tag and shows that label, falling back to the ability's `Use Key Label` when it's empty.
 
 No other setup is required. The ability is granted and activated automatically; AI ability instances stay idle (the trace and prompt only run for locally controlled players).
 
@@ -87,3 +89,18 @@ Assign the widget class to `Prompt Widget Class` on the ability Blueprint. The a
 - Set `bDebugTrace` on the ability to visualize the interaction ray.
 - The demo targets standalone/listen-server play. In dedicated-server games, interacting runs on the machine that owns the input; replicate your interactable's effects (or route them through gameplay events) as needed.
 - The prompt actor is spawned and destroyed by the ability and never saved into the level.
+
+### Troubleshooting
+
+The use input chain logs three checkpoints in order. Press the use key with the prompt visible and watch the Output Log (`Window → Output Log`, filter for `Input` or `UseAbility`):
+
+| Log line | Checkpoint proven to work |
+| --- | --- |
+| `[AbilityInput] <pawn> forwarded gameplay event Combat.Input.UsePressed` | Enhanced Input fired the mapping and the character forwarded the event |
+| `[UseAbility] use input received` | The event reached the passive ability's `WaitGameplayEvent` task |
+| `[UseAbility] <pawn> used <target>` | The target's `Use` was called — from here the target's own Blueprint responds |
+
+- **Nothing logs on press** → the `Event Input Mappings` entry isn't firing. Confirm the entry exists on the pawn Blueprint actually used in the level (Input Action and Event Tag set), then run `showdebug enhancedinput` in the console while playing to see whether the action fires and which mappings are active.
+- **`[AbilityInput]` logs but `[UseAbility]` doesn't** → the event tag in the character's Event Input Mappings doesn't match `Combat.Input.UsePressed` exactly (the logged tag shows what was sent).
+- **`[UseAbility] use input received, but no usable target is in range`** → the input chain works; the re-trace on press lost the target (it left range, became unusable, or something now blocks the ray).
+- **`[UseAbility] ... used ...` logs but nothing happens in the world** → the interaction fired; the target's response (its action volume's `On Used` binding or `Actors To Activate`) isn't set up.
