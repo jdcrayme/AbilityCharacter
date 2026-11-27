@@ -69,16 +69,11 @@ Source/AbilityCharacter/
 │   │   │                                    dummy, damageable box, lava floor
 │   │   └── UI/CombatLifeBar
 │   │
-│   ├── Interaction/
-│   │   ├── AbilitySystem/UseAbility         passive trace + prompt ability
-│   │   ├── Interfaces/CombatUsable          CanUse/GetUseText/Use
-│   │   ├── Gameplay/CombatActionVolume(+Component)
-│   │   └── UI/CombatUsePromptActor/Interface/Widget
-│   │
-│   ├── Platforming/                         double/wall jump, coyote time,
-│   │                                        dash (plain ACharacter)
-│   └── SideScrolling/                       2.5D movement, jump pads,
-│                                            moving/soft platforms, NPC
+│   └── Interaction/
+│       ├── AbilitySystem/UseAbility         passive trace + prompt ability
+│       ├── Interfaces/CombatUsable          CanUse/GetUseText/Use
+│       ├── Gameplay/CombatActionVolume(+Component)
+│       └── UI/CombatUsePromptActor/Interface/Widget
 │
 └── Template/                                original third person demo
     ├── AbilityCharacterCharacter             classes; redirect targets for
