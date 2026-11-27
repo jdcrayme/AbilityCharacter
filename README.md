@@ -2,6 +2,31 @@
 
 Developed with Unreal Engine 5
 
+## Project structure
+
+The source module is organized so every gameplay feature is a self-contained
+slice that can later move into the planned modular character plugin, and the
+shared base sits in `Core/`:
+
+```
+Source/AbilityCharacter/
+├── Core/            shared base: CharacterBase, base PlayerController, GAS
+│                    plumbing (attributes, ASC, tags, effect context),
+│                    shared interfaces and widget glue
+├── Features/
+│   ├── Combat/      melee/charged/combo/ranged abilities, stances, AI,
+│   │                animation notifies, combat actors and life bar
+│   ├── Interaction/ the use ability described below: usable interface,
+│   │                action volumes, prompt UI
+│   ├── Platforming/ double/wall jump, coyote time, dash
+│   └── SideScrolling/
+└── Template/        the original third person demo classes (kept as
+                     redirect targets for the template Blueprints)
+```
+
+See `ARCHITECTURE.md` for the full map from this layout to the future plugin,
+and `CLEANUP.md` for the change log of the cleanup pass.
+
 ## Use Ability (Interaction System)
 
 A passive **use ability** that lets a character interact with anything **usable** in the world:
@@ -26,14 +51,14 @@ Adding the use ability to a character (or a future grapple/inspect/vehicle abili
 
 | File | Purpose |
 | --- | --- |
-| `Variant_Combat/AbilitySystem/UseAbility.h/.cpp` | The passive ability: periodic trace, target resolution, world-space prompt, key handling |
-| `Variant_Combat/Interfaces/CombatUsable.h/.cpp` | Blueprintable interface for usable actors and components (`CanUse`, `GetUseText`, `Use`) |
-| `Variant_Combat/Interfaces/CombatInputLabelProvider.h/.cpp` | Interface for pawns that can name the key bound to an input event tag (`GetKeyLabelForEvent`); `CharacterBase` answers from its `EventInputMappings`, so prompts always show the character's configured key |
-| `Variant_Combat/Gameplay/CombatActionVolumeComponent.h/.cpp` | **Actor component** that makes any actor usable: UseText, `OnUsed` event, linked `CombatActivatable` actors, optional auto-created trace box |
-| `Variant_Combat/Gameplay/CombatActionVolume.h/.cpp` | Standalone, level-placeable action volume (a box + the component above) |
-| `Variant_Combat/UI/CombatUsePromptActor.h/.cpp` | World-space prompt holder: a `WidgetComponent` actor the ability spawns, moves and hides; smoothly follows its target between traces |
-| `Variant_Combat/UI/CombatUsePromptInterface.h/.cpp` | Widget interface: `UpdatePromptText(KeyText, ActionText)` — how the ability feeds the prompt without knowing the widget class |
-| `Variant_Combat/UI/CombatUsePromptWidget.h/.cpp` | Default prompt widget with a C++-built `[E] Open` layout (works with no assets); Blueprint subclasses can design their own layout and use `BP_OnPromptTextChanged` |
+| `Features/Interaction/AbilitySystem/UseAbility.h/.cpp` | The passive ability: periodic trace, target resolution, world-space prompt, key handling |
+| `Features/Interaction/Interfaces/CombatUsable.h/.cpp` | Blueprintable interface for usable actors and components (`CanUse`, `GetUseText`, `Use`) |
+| `Core/Interfaces/CombatInputLabelProvider.h/.cpp` | Interface for pawns that can name the key bound to an input event tag (`GetKeyLabelForEvent`); `CharacterBase` answers from its `EventInputMappings`, so prompts always show the character's configured key |
+| `Features/Interaction/Gameplay/CombatActionVolumeComponent.h/.cpp` | **Actor component** that makes any actor usable: UseText, `OnUsed` event, linked `CombatActivatable` actors, optional auto-created trace box |
+| `Features/Interaction/Gameplay/CombatActionVolume.h/.cpp` | Standalone, level-placeable action volume (a box + the component above) |
+| `Features/Interaction/UI/CombatUsePromptActor.h/.cpp` | World-space prompt holder: a `WidgetComponent` actor the ability spawns, moves and hides; smoothly follows its target between traces |
+| `Features/Interaction/UI/CombatUsePromptInterface.h/.cpp` | Widget interface: `UpdatePromptText(KeyText, ActionText)` — how the ability feeds the prompt without knowing the widget class |
+| `Features/Interaction/UI/CombatUsePromptWidget.h/.cpp` | Default prompt widget with a C++-built `[E] Open` layout (works with no assets); Blueprint subclasses can design their own layout and use `BP_OnPromptTextChanged` |
 
 ### Editor setup (once per project)
 

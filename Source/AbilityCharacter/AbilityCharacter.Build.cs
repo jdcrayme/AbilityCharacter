@@ -27,22 +27,10 @@ public class AbilityCharacter : ModuleRules
 
                 PrivateDependencyModuleNames.AddRange(new string[] { });
 
+                // the module root is the only include path: all project includes are
+                // module-relative (e.g. "Features/Combat/AbilitySystem/MeleeAbility.h")
                 PublicIncludePaths.AddRange(new string[] {
                         "AbilityCharacter",
-                        "AbilityCharacter/Variant_Platforming",
-                        "AbilityCharacter/Variant_Platforming/Animation",
-                        "AbilityCharacter/Variant_Combat",
-                        "AbilityCharacter/Variant_Combat/AI",
-                        "AbilityCharacter/Variant_Combat/Animation",
-                        "AbilityCharacter/Variant_Combat/AbilitySystem",
-                        "AbilityCharacter/Variant_Combat/Gameplay",
-                        "AbilityCharacter/Variant_Combat/Interfaces",
-                        "AbilityCharacter/Variant_Combat/UI",
-                        "AbilityCharacter/Variant_SideScrolling",
-                        "AbilityCharacter/Variant_SideScrolling/AI",
-                        "AbilityCharacter/Variant_SideScrolling/Gameplay",
-                        "AbilityCharacter/Variant_SideScrolling/Interfaces",
-                        "AbilityCharacter/Variant_SideScrolling/UI"
                 });
 
                 // Uncomment if you are using Slate UI
