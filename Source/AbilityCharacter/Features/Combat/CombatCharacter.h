@@ -13,6 +13,9 @@ class UInputAction;
 struct FInputActionValue;
 class UCombatLifeBar;
 class UWidgetComponent;
+class UCombatInventoryComponent;
+class UWeaponEquipmentComponent;
+class UWeaponData;
 
 /**
  *  An enhanced Third Person Character with melee combat capabilities.
@@ -42,6 +45,22 @@ protected:
         /** Jump Input Action */
         UPROPERTY(EditAnywhere, Category ="Input")
         UInputAction* JumpAction;
+
+        /** Generic possession layer: reserve ammo, medkits and anything else counted by tag */
+        UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Equipment", meta = (AllowPrivateAccess = "true"))
+        UCombatInventoryComponent* InventoryComponent;
+
+        /** Weapon equipment seam: spawns weapons, grants their abilities, owns the State.Weapon slot */
+        UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Equipment", meta = (AllowPrivateAccess = "true"))
+        UWeaponEquipmentComponent* WeaponEquipmentComponent;
+
+        /** Weapon the character starts with; equipped (but not drawn) on spawn */
+        UPROPERTY(EditDefaultsOnly, Category="Equipment")
+        TObjectPtr<UWeaponData> StartingWeapon;
+
+        /** Rounds seeded into the inventory's reserve entry for the starting weapon's ammo type */
+        UPROPERTY(EditDefaultsOnly, Category="Equipment", meta = (ClampMin = 0))
+        int32 StartingAmmoReserve = 90;
 
         /** Move Input Action */
         UPROPERTY(EditAnywhere, Category ="Input")

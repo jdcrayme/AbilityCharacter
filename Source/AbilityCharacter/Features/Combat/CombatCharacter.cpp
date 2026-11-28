@@ -18,6 +18,9 @@
 #include "Features/Combat/AbilitySystem/StanceMonitorAbility.h"
 #include "Features/Combat/AbilitySystem/CombatStanceAbility.h"
 #include "Features/Combat/AbilitySystem/NeutralStanceAbility.h"
+#include "Features/Weapons/Equipment/CombatInventoryComponent.h"
+#include "Features/Weapons/Equipment/WeaponEquipmentComponent.h"
+#include "Features/Weapons/WeaponData.h"
 
 ACombatCharacter::ACombatCharacter()
 {
@@ -45,6 +48,15 @@ ACombatCharacter::ACombatCharacter()
 
         // set the player tag
         Tags.Add(FName("Player"));
+
+        // the weapon feature's two seams: the inventory holds what the
+        // character possesses (reserve ammo as tag-keyed counts) and the
+        // equipment component spawns weapons, grants their abilities and
+        // owns the State.Weapon slot. Both are components so a civilian
+        // character without them simply never has weapon functionality -
+        // the character class itself stays free of weapon code.
+        InventoryComponent = CreateDefaultSubobject<UCombatInventoryComponent>(TEXT("InventoryComponent"));
+        WeaponEquipmentComponent = CreateDefaultSubobject<UWeaponEquipmentComponent>(TEXT("WeaponEquipmentComponent"));
 
         // the stance monitor watches the game context (nearby enemies, arena volumes)
         // and switches between stances; the combat stance grants the attack abilities.
@@ -196,6 +208,19 @@ void ACombatCharacter::BeginPlay()
 
         // save the relative transform for the mesh so we can reset the ragdoll later
         MeshStartingTransform = GetMesh()->GetRelativeTransform();
+
+        // bring the weapon feature up on spawn: the reserve rounds go into
+        // the inventory and the weapon equips onto the back (not drawn - the
+        // equip ability draws it). Server side, like every state grant.
+        if (HasAuthority() && StartingWeapon)
+        {
+                if (StartingAmmoReserve > 0 && StartingWeapon->Ammo.AmmoTypeTag.IsValid())
+                {
+                        InventoryComponent->AddEntry(StartingWeapon->Ammo.AmmoTypeTag, StartingAmmoReserve);
+                }
+
+                WeaponEquipmentComponent->EquipWeapon(StartingWeapon);
+        }
 }
 
 void ACombatCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
